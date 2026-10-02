@@ -14,7 +14,6 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts"],
     env: {
-      SKIP_ENV_VALIDATION: "true",
       CLINICAL_RECORDS_ENCRYPTION_KEY:
         "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
     },

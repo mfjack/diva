@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { env } from "@/lib/env";
+import { serverEnv } from "@/lib/server-env";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH_IN_BYTES = 12;
@@ -10,7 +10,7 @@ const PAYLOAD_SEPARATOR = ":";
 const ENCODING = "base64";
 
 function getEncryptionKey(): Buffer {
-  return Buffer.from(env.CLINICAL_RECORDS_ENCRYPTION_KEY, ENCODING);
+  return Buffer.from(serverEnv.CLINICAL_RECORDS_ENCRYPTION_KEY, ENCODING);
 }
 
 export function encryptClinicalContent(plainText: string): string {

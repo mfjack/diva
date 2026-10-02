@@ -1,13 +1,13 @@
 import type { Brand } from "@/lib/brand";
-import type { USER_ROLES } from "@/server/db/schema/enums";
+import type { Enums } from "@/lib/supabase/database.types";
 
 export type UserId = Brand<string, "UserId">;
 
-export type UserRole = (typeof USER_ROLES)[number];
+export type UserRole = Enums<"user_role">;
 
 export type CurrentUser = {
   id: UserId;
-  name: string;
+  fullName: string;
   email: string;
   role: UserRole;
 };

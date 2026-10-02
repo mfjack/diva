@@ -1,4 +1,4 @@
-import { requireRole } from "@/server/auth/session";
+import { requireRole } from "@/features/auth/queries";
 
 export default async function PsychologistLayout({
   children,

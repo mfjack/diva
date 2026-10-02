@@ -2,6 +2,7 @@ export const ROUTES = {
   home: "/",
   login: "/login",
   signUp: "/sign-up",
+  authCallback: "/auth/callback",
   psychologist: {
     dashboard: "/dashboard",
     schedule: "/dashboard/schedule",
@@ -20,6 +21,4 @@ export const ROUTES = {
 
 export const AUTH_ROUTES = [ROUTES.login, ROUTES.signUp] as const;
 
-export const PSYCHOLOGIST_ROUTE_PREFIX = ROUTES.psychologist.dashboard;
-
-export const PATIENT_ROUTE_PREFIX = ROUTES.patient.home;
+export const PUBLIC_ROUTES = [...AUTH_ROUTES, "/auth"] as const;

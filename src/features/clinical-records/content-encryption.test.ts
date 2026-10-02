@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   decryptClinicalContent,
   encryptClinicalContent,
-} from "./clinical-content";
+} from "./content-encryption";
 
 describe("clinical content encryption", () => {
   it("round-trips the original text", () => {

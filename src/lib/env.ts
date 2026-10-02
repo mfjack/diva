@@ -1,26 +1,14 @@
-import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-const ENCRYPTION_KEY_LENGTH = 44;
+const publicEnvSchema = z.object({
+  NEXT_PUBLIC_SUPABASE_URL: z.url(),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  NEXT_PUBLIC_SITE_URL: z.url().default("http://localhost:3000"),
+});
 
-export const env = createEnv({
-  server: {
-    DATABASE_URL: z.url(),
-    BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_URL: z.url(),
-    CLINICAL_RECORDS_ENCRYPTION_KEY: z.string().length(ENCRYPTION_KEY_LENGTH),
-  },
-  client: {
-    NEXT_PUBLIC_APP_URL: z.url(),
-  },
-  runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
-    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
-    CLINICAL_RECORDS_ENCRYPTION_KEY:
-      process.env.CLINICAL_RECORDS_ENCRYPTION_KEY,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  },
-  emptyStringAsUndefined: true,
-  skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
+export const env = publicEnvSchema.parse({
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 });
