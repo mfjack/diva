@@ -1,6 +1,11 @@
 import "server-only";
 
-import { findMockPatient, mockPatients } from "@/mocks/patients";
+import {
+  CURRENT_PATIENT_ID,
+  findMockPatient,
+  getMockPatient,
+  mockPatients,
+} from "@/mocks/patients";
 import type { Patient } from "./types";
 
 export async function listPatients(): Promise<Patient[]> {
@@ -11,4 +16,8 @@ export async function listPatients(): Promise<Patient[]> {
 
 export async function getPatient(patientId: string): Promise<Patient | null> {
   return findMockPatient(patientId) ?? null;
+}
+
+export async function getCurrentPatient(): Promise<Patient> {
+  return getMockPatient(CURRENT_PATIENT_ID);
 }
