@@ -1,17 +1,14 @@
+"use client";
+
 import { MessageCircle } from "lucide-react";
 import { formatPhone } from "@/lib/masks";
 import { cn } from "@/lib/utils";
-
-const BRAZIL_COUNTRY_CODE = "55";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 
 type WhatsAppLinkProps = {
   phone: string;
   className?: string;
 };
-
-export function getWhatsAppUrl(phone: string): string {
-  return `https://wa.me/${BRAZIL_COUNTRY_CODE}${phone}`;
-}
 
 export function WhatsAppLink({ phone, className }: WhatsAppLinkProps) {
   const formattedPhone = formatPhone(phone);
