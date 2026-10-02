@@ -25,6 +25,12 @@ Stack: Next.js (App Router) · React · TypeScript · Tailwind · shadcn/ui (Bas
 - Schemas Zod são a fonte única de verdade: tipos vêm de `z.infer` e o mesmo schema valida formulário e servidor.
 - Variáveis de ambiente só via `env` (`src/lib/env.ts`), validadas com Zod.
 
+## Fase atual: frontend com dados de exemplo
+- As telas usam dados de exemplo de `src/mocks/`, servidos pelas funções de `src/features/<domain>/queries.ts`. Ao ligar o Supabase, troque só o corpo dessas funções; as telas não mudam.
+- As Server Actions já validam com Zod e retornam `ActionResult`, mas ainda não gravam nada. As telas aplicam a mudança localmente no `onSuccess`.
+- Login e proteção de rotas estão desligados até o backend entrar (`src/lib/supabase/proxy.ts` e `src/features/auth/queries.ts` já estão prontos para isso).
+- A área do paciente usa o paciente fixo `CURRENT_PATIENT_ID` (`src/mocks/patients.ts`).
+
 ## Dados
 - Dinheiro sempre em centavos inteiros (`Cents`, `src/lib/money.ts`), nunca `float`. Conversão só na borda (input e `formatCurrency`).
 - Datas salvas em UTC (`timestamptz`) e exibidas em `America/Sao_Paulo` pelas funções de `src/lib/format.ts`.
