@@ -16,7 +16,7 @@ import {
 } from "@/lib/action-result";
 import { zonedDateTime } from "@/lib/dates";
 import { ROUTES } from "@/lib/routes";
-import { registerMockPayment } from "@/mocks/payments";
+import { registerMockPayment, undoMockPayment } from "@/mocks/payments";
 import { PAYMENT_ACTION_MESSAGES } from "./messages";
 import { type RegisterPaymentInput, registerPaymentSchema } from "./schemas";
 
@@ -52,6 +52,28 @@ export async function registerPayment(
       DEFAULT_PAYMENT_TIME,
     ).toISOString(),
   });
+  revalidatePath(ROUTES.psychologist.dashboard, "layout");
+  return actionSuccess();
+}
+
+export async function undoPayment(
+  appointmentId: AppointmentId,
+): Promise<ActionResult> {
+  if (!(await getAuthorizedPsychologist())) {
+    return actionFailure(UNAUTHORIZED_MESSAGE);
+  }
+  const parsedId = appointmentIdSchema.safeParse(appointmentId);
+  if (!parsedId.success) return actionFailure(INVALID_FORM_MESSAGE);
+
+  const appointment = await getAppointment(parsedId.data);
+  if (!appointment) {
+    return actionFailure(PAYMENT_ACTION_MESSAGES.sessionNotFound);
+  }
+  if (appointment.paymentStatus !== "paid") {
+    return actionFailure(PAYMENT_ACTION_MESSAGES.notPaid);
+  }
+
+  undoMockPayment(appointment.id);
   revalidatePath(ROUTES.psychologist.dashboard, "layout");
   return actionSuccess();
 }
