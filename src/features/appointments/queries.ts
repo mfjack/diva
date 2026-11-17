@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { PatientId } from "@/features/patients/types";
+import type { BusyInterval } from "@/features/practice-settings/availability";
 import {
   getPracticeSettings,
   listAvailabilityBlocks,
@@ -65,6 +66,18 @@ export async function hasConflictingAppointment(
       appointment.startsAt < endsAt &&
       appointment.endsAt > startsAt,
   );
+}
+
+export async function listBusyIntervalsOn(
+  dateKey: string,
+  ignoredAppointmentId?: string,
+): Promise<BusyInterval[]> {
+  const appointments = await listAppointmentsBetween(dateKey, dateKey);
+  return appointments
+    .filter(
+      ({ id, status }) => id !== ignoredAppointmentId && status !== "cancelled",
+    )
+    .map(({ startsAt, endsAt }) => ({ startsAt, endsAt }));
 }
 
 export async function getSessionPlan(

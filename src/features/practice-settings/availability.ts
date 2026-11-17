@@ -1,4 +1,4 @@
-import { getWeekdayOfDateKey } from "@/lib/dates";
+import { getWeekdayOfDateKey, zonedDateTime } from "@/lib/dates";
 import {
   MINUTES_PER_HOUR,
   minutesToTime,
@@ -6,6 +6,41 @@ import {
   timeToMinutes,
 } from "@/lib/time-slots";
 import type { AvailabilityRule } from "./types";
+
+export type BusyInterval = {
+  startsAt: string;
+  endsAt: string;
+};
+
+export function overlaps(first: BusyInterval, second: BusyInterval): boolean {
+  return first.startsAt < second.endsAt && first.endsAt > second.startsAt;
+}
+
+export function toSessionInterval(
+  dateKey: string,
+  time: string,
+  sessionDurationMinutes: number,
+): BusyInterval {
+  const startsAt = zonedDateTime(dateKey, time);
+  return {
+    startsAt: startsAt.toISOString(),
+    endsAt: new Date(
+      startsAt.getTime() + sessionDurationMinutes * 60_000,
+    ).toISOString(),
+  };
+}
+
+export function excludeOccupiedTimes(
+  times: readonly string[],
+  dateKey: string,
+  sessionDurationMinutes: number,
+  busyIntervals: readonly BusyInterval[],
+): string[] {
+  return times.filter((time) => {
+    const session = toSessionInterval(dateKey, time, sessionDurationMinutes);
+    return !busyIntervals.some((busy) => overlaps(session, busy));
+  });
+}
 
 export type SessionAvailability = {
   rules: readonly AvailabilityRule[];

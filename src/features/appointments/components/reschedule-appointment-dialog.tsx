@@ -82,6 +82,7 @@ export function RescheduleAppointmentDialog({
           label="Novo horário"
           dateKey={date}
           availability={availability}
+          ignoredAppointmentId={appointment?.id}
         />
       </div>
     </FormDialog>

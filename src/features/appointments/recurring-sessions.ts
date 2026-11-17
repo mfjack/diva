@@ -1,8 +1,11 @@
 import {
+  type BusyInterval,
   isWithinAvailability,
+  overlaps,
   type SessionAvailability,
+  toSessionInterval,
 } from "@/features/practice-settings/availability";
-import { addDaysToDateKey, zonedDateTime } from "@/lib/dates";
+import { addDaysToDateKey } from "@/lib/dates";
 import { getHoliday } from "@/lib/holidays";
 import { getMonthRange, toMonthKey } from "@/lib/months";
 
@@ -14,8 +17,6 @@ const REPEAT_INTERVAL_DAYS = {
   weekly: 7,
   biweekly: 14,
 } as const satisfies Record<Exclude<SessionRepeat, "none">, number>;
-
-const MINUTE_IN_MS = 60_000;
 
 export type SessionPlanInput = {
   date: string;
@@ -36,11 +37,6 @@ export type PlannedSession = {
   endsAt: string;
   skipReason: SessionSkipReason | null;
   holidayName: string | null;
-};
-
-type BusyInterval = {
-  startsAt: string;
-  endsAt: string;
 };
 
 export type SessionPlanContext = {
@@ -69,12 +65,6 @@ export function planSessionDateKeys({
     dateKeys.push(dateKey);
   }
   return dateKeys;
-}
-
-function overlaps(session: BusyInterval, interval: BusyInterval): boolean {
-  return (
-    session.startsAt < interval.endsAt && session.endsAt > interval.startsAt
-  );
 }
 
 type SessionCandidate = BusyInterval & {
@@ -111,15 +101,14 @@ export function planSessions(
 ): PlannedSession[] {
   const isSeries = input.repeat !== "none";
   return planSessionDateKeys(input).map((dateKey) => {
-    const start = zonedDateTime(dateKey, input.time);
     const session = {
       dateKey,
       time: input.time,
-      startsAt: start.toISOString(),
-      endsAt: new Date(
-        start.getTime() +
-          context.availability.sessionDurationMinutes * MINUTE_IN_MS,
-      ).toISOString(),
+      ...toSessionInterval(
+        dateKey,
+        input.time,
+        context.availability.sessionDurationMinutes,
+      ),
     };
     const holiday = getHoliday(dateKey);
     const holidayName = holiday && !holiday.isOptional ? holiday.name : null;

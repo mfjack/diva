@@ -10,9 +10,11 @@ import {
 } from "react-hook-form";
 import { TimeField } from "@/components/form/time-field";
 import {
+  excludeOccupiedTimes,
   listAvailableTimes,
   type SessionAvailability,
 } from "@/features/practice-settings/availability";
+import { useBusyIntervalsQuery } from "../hooks/use-busy-intervals-query";
 
 type AvailableTimeFieldProps<TFieldValues extends FieldValues> = {
   control: Control<TFieldValues>;
@@ -20,7 +22,16 @@ type AvailableTimeFieldProps<TFieldValues extends FieldValues> = {
   label: string;
   dateKey: string;
   availability: SessionAvailability;
+  ignoredAppointmentId?: string;
 };
+
+function getEmptyMessage(dateKey: string, hasWorkingHours: boolean): string {
+  if (!dateKey) return "Escolha a data para ver os horários.";
+  if (!hasWorkingHours) {
+    return "Você não atende nesse dia. Ajuste em Configurações.";
+  }
+  return "Todos os horários desse dia já estão ocupados.";
+}
 
 export function AvailableTimeField<TFieldValues extends FieldValues>({
   control,
@@ -28,30 +39,45 @@ export function AvailableTimeField<TFieldValues extends FieldValues>({
   label,
   dateKey,
   availability,
+  ignoredAppointmentId,
 }: AvailableTimeFieldProps<TFieldValues>) {
   const { field } = useController({ control, name });
-  const availableTimes = useMemo(
+  const busyIntervalsQuery = useBusyIntervalsQuery(
+    dateKey ? { date: dateKey, ignoredAppointmentId } : null,
+  );
+  const workingTimes = useMemo(
     () => (dateKey ? listAvailableTimes(availability, dateKey) : []),
     [availability, dateKey],
   );
+  const freeTimes = useMemo(
+    () =>
+      excludeOccupiedTimes(
+        workingTimes,
+        dateKey,
+        availability.sessionDurationMinutes,
+        busyIntervalsQuery.data ?? [],
+      ),
+    [
+      workingTimes,
+      dateKey,
+      availability.sessionDurationMinutes,
+      busyIntervalsQuery.data,
+    ],
+  );
 
   useEffect(() => {
-    if (field.value && !availableTimes.includes(field.value)) {
+    if (field.value && !freeTimes.includes(field.value)) {
       field.onChange("" as PathValue<TFieldValues, typeof name>);
     }
-  }, [availableTimes, field]);
+  }, [freeTimes, field]);
 
   return (
     <TimeField
       control={control}
       name={name}
       label={label}
-      times={availableTimes}
-      emptyMessage={
-        dateKey
-          ? "Você não atende nesse dia. Ajuste em Configurações."
-          : "Escolha a data para ver os horários."
-      }
+      times={freeTimes}
+      emptyMessage={getEmptyMessage(dateKey, workingTimes.length > 0)}
     />
   );
 }

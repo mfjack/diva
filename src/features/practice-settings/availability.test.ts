@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  excludeOccupiedTimes,
   isWithinAvailability,
   listAvailableTimes,
   type SessionAvailability,
@@ -50,5 +51,35 @@ describe("isWithinAvailability", () => {
   it("rejects sessions that overflow the interval", () => {
     expect(isWithinAvailability(availability, WEDNESDAY, "09:15")).toBe(false);
     expect(isWithinAvailability(availability, SUNDAY, "08:00")).toBe(false);
+  });
+});
+
+describe("excludeOccupiedTimes", () => {
+  const times = ["08:00", "09:00", "10:00"];
+
+  it("tira os horários que se sobrepõem a uma sessão marcada", () => {
+    const busy = [
+      {
+        startsAt: "2026-12-02T12:00:00.000Z",
+        endsAt: "2026-12-02T12:50:00.000Z",
+      },
+    ];
+    expect(excludeOccupiedTimes(times, WEDNESDAY, 50, busy)).toEqual([
+      "08:00",
+      "10:00",
+    ]);
+  });
+
+  it("mantém um horário que começa quando a outra sessão termina", () => {
+    const busy = [
+      {
+        startsAt: "2026-12-02T11:10:00.000Z",
+        endsAt: "2026-12-02T12:00:00.000Z",
+      },
+    ];
+    expect(excludeOccupiedTimes(times, WEDNESDAY, 50, busy)).toEqual([
+      "09:00",
+      "10:00",
+    ]);
   });
 });
