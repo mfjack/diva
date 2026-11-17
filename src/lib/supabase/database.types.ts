@@ -320,6 +320,7 @@ export type Database = {
           health_insurance: string | null
           id: string
           notes: string | null
+          preferred_modality: Database["public"]["Enums"]["appointment_modality"]
           phone: string | null
           psychologist_id: string
           session_price_cents: number | null
@@ -339,6 +340,7 @@ export type Database = {
           health_insurance?: string | null
           id?: string
           notes?: string | null
+          preferred_modality?: Database["public"]["Enums"]["appointment_modality"]
           phone?: string | null
           psychologist_id: string
           session_price_cents?: number | null
@@ -358,6 +360,7 @@ export type Database = {
           health_insurance?: string | null
           id?: string
           notes?: string | null
+          preferred_modality?: Database["public"]["Enums"]["appointment_modality"]
           phone?: string | null
           psychologist_id?: string
           session_price_cents?: number | null

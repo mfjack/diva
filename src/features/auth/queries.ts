@@ -2,20 +2,17 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { ROUTES } from "@/lib/routes";
+import { isMockAuth } from "@/lib/auth-mode";
+import { LOGIN_ERROR_CODES, ROUTES } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
-import type { CurrentUser, UserId, UserRole } from "./types";
+import { mockCurrentUser } from "@/mocks/current-user";
+import type { CurrentUser, UserId } from "./types";
 
-const HOME_BY_ROLE = {
-  psychologist: ROUTES.psychologist.dashboard,
-  patient: ROUTES.patient.home,
-} as const satisfies Record<UserRole, string>;
-
-export function getHomeRouteForRole(role: UserRole): string {
-  return HOME_BY_ROLE[role];
-}
+const ACCESS_DENIED_PATH = `${ROUTES.login}?error=${LOGIN_ERROR_CODES.accessDenied}`;
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  if (isMockAuth) return mockCurrentUser;
+
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) return null;
@@ -35,18 +32,14 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   };
 });
 
-export async function getUserWithRole(
-  role: UserRole,
-): Promise<CurrentUser | null> {
+export async function getAuthorizedPsychologist(): Promise<CurrentUser | null> {
   const currentUser = await getCurrentUser();
-  return currentUser?.role === role ? currentUser : null;
+  return currentUser?.role === "psychologist" ? currentUser : null;
 }
 
-export async function requireRole(role: UserRole): Promise<CurrentUser> {
+export async function requirePsychologist(): Promise<CurrentUser> {
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect(ROUTES.login);
-  if (currentUser.role !== role) {
-    redirect(getHomeRouteForRole(currentUser.role));
-  }
+  if (currentUser.role !== "psychologist") redirect(ACCESS_DENIED_PATH);
   return currentUser;
 }

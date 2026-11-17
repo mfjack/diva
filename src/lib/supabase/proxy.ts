@@ -1,6 +1,9 @@
+import "server-only";
+
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { actionFailure } from "@/lib/action-result";
+import { isMockAuth } from "@/lib/auth-mode";
 import { env } from "@/lib/env";
 import { AUTH_ROUTES, PUBLIC_ROUTES, ROUTES } from "@/lib/routes";
 import type { Database } from "./database.types";
@@ -23,11 +26,11 @@ function buildLoginRedirectUrl(request: NextRequest) {
   return loginUrl;
 }
 
-function buildHomeRedirectUrl(request: NextRequest) {
-  const homeUrl = request.nextUrl.clone();
-  homeUrl.pathname = ROUTES.home;
-  homeUrl.search = "";
-  return homeUrl;
+function buildDashboardRedirectUrl(request: NextRequest) {
+  const dashboardUrl = request.nextUrl.clone();
+  dashboardUrl.pathname = ROUTES.psychologist.home;
+  dashboardUrl.search = "";
+  return dashboardUrl;
 }
 
 function redirectKeepingCookies(url: URL, sourceResponse: NextResponse) {
@@ -39,6 +42,8 @@ function redirectKeepingCookies(url: URL, sourceResponse: NextResponse) {
 }
 
 export async function updateSession(request: NextRequest) {
+  if (isMockAuth) return NextResponse.next({ request });
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
@@ -85,7 +90,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isAuthenticated && matchesAnyRoute(pathname, AUTH_ROUTES)) {
-    return redirectKeepingCookies(buildHomeRedirectUrl(request), response);
+    return redirectKeepingCookies(buildDashboardRedirectUrl(request), response);
   }
 
   return response;
