@@ -12,23 +12,20 @@ import {
   actionFailure,
   actionSuccess,
 } from "@/lib/action-result";
-import { EMPTY_RICH_TEXT, getRichTextPlainText } from "@/lib/rich-text";
+import { getRichTextPlainText } from "@/lib/rich-text";
 import { ROUTES } from "@/lib/routes";
-import {
-  findMockStudyNote,
-  insertMockStudyNote,
-  softDeleteMockStudyNote,
-  updateMockStudyNote,
-} from "@/mocks/study-notes";
+import type { Json, TablesUpdate } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/server";
 import { STUDY_NOTE_ACTION_MESSAGES } from "./messages";
 import { normalizeTags } from "./note-list";
+import { getStudyNote } from "./queries";
 import { type StudyNoteInput, studyNoteSchema } from "./schemas";
 import type { StudyNoteId } from "./types";
 
 function findAuthorizedNote(noteId: string) {
   return findAuthorizedEntity(
     noteId,
-    findMockStudyNote,
+    getStudyNote,
     STUDY_NOTE_ACTION_MESSAGES.notFound,
   );
 }
@@ -37,26 +34,31 @@ function revalidateStudies(): void {
   revalidatePath(ROUTES.psychologist.studies);
 }
 
+async function updateStudyNote(
+  noteId: StudyNoteId,
+  changes: TablesUpdate<"study_notes">,
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("study_notes")
+    .update(changes)
+    .eq("id", noteId);
+  return error === null;
+}
+
 export async function createStudyNote(): Promise<
   ActionResult<{ noteId: StudyNoteId }>
 > {
-  if (!(await getAuthorizedPsychologist())) {
-    return actionFailure(UNAUTHORIZED_MESSAGE);
-  }
-  const now = new Date().toISOString();
-  const noteId = crypto.randomUUID() as StudyNoteId;
-  insertMockStudyNote({
-    id: noteId,
-    title: "",
-    kind: "note",
-    content: EMPTY_RICH_TEXT,
-    plainText: "",
-    tags: [],
-    source: null,
-    isPinned: false,
-    createdAt: now,
-    updatedAt: now,
-  });
+  const psychologist = await getAuthorizedPsychologist();
+  if (!psychologist) return actionFailure(UNAUTHORIZED_MESSAGE);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("study_notes")
+    .insert({ psychologist_id: psychologist.id })
+    .select("id")
+    .single();
+  if (error) return actionFailure(STUDY_NOTE_ACTION_MESSAGES.saveFailed);
+  const noteId = data.id as StudyNoteId;
   revalidateStudies();
   return actionSuccess({ noteId });
 }
@@ -74,17 +76,18 @@ export async function saveStudyNote(
     parsedInput.data;
   const hasSource = Boolean(sourceTitle || sourceAuthor || sourceUrl);
   const savedAt = new Date().toISOString();
-  updateMockStudyNote(lookup.entity.id, {
+  const isSaved = await updateStudyNote(lookup.entity.id, {
     title,
     kind,
-    content,
-    plainText: getRichTextPlainText(content),
+    content: content as Json,
+    plain_text: getRichTextPlainText(content),
     tags: normalizeTags(tags),
-    source: hasSource
-      ? { title: sourceTitle, author: sourceAuthor, url: sourceUrl }
-      : null,
-    updatedAt: savedAt,
+    source_title: hasSource ? sourceTitle || null : null,
+    source_author: hasSource ? sourceAuthor || null : null,
+    source_url: hasSource ? sourceUrl || null : null,
+    updated_at: savedAt,
   });
+  if (!isSaved) return actionFailure(STUDY_NOTE_ACTION_MESSAGES.saveFailed);
   revalidateStudies();
   return actionSuccess({ savedAt });
 }
@@ -95,7 +98,10 @@ export async function toggleStudyNotePin(
   const lookup = await findAuthorizedNote(noteId);
   if (!lookup.isFound) return lookup.failure;
 
-  updateMockStudyNote(lookup.entity.id, { isPinned: !lookup.entity.isPinned });
+  const isSaved = await updateStudyNote(lookup.entity.id, {
+    is_pinned: !lookup.entity.isPinned,
+  });
+  if (!isSaved) return actionFailure(STUDY_NOTE_ACTION_MESSAGES.saveFailed);
   revalidateStudies();
   return actionSuccess();
 }
@@ -106,7 +112,10 @@ export async function deleteStudyNote(
   const lookup = await findAuthorizedNote(noteId);
   if (!lookup.isFound) return lookup.failure;
 
-  softDeleteMockStudyNote(lookup.entity.id);
+  const isSaved = await updateStudyNote(lookup.entity.id, {
+    deleted_at: new Date().toISOString(),
+  });
+  if (!isSaved) return actionFailure(STUDY_NOTE_ACTION_MESSAGES.saveFailed);
   revalidateStudies();
   return actionSuccess();
 }
