@@ -15,17 +15,17 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { CLINICAL_RECORD_KIND_LABELS } from "@/features/clinical-records/labels";
-import type { ClinicalRecord } from "@/features/clinical-records/types";
+import type { ClinicalRecordSummary } from "@/features/clinical-records/types";
 import { formatDate } from "@/lib/format";
 import { ROUTES } from "@/lib/routes";
 
-const columnHelper = createDataTableColumnHelper<ClinicalRecord>();
+const columnHelper = createDataTableColumnHelper<ClinicalRecordSummary>();
 
 type RecordsTableProps = {
-  records: ClinicalRecord[];
+  records: ClinicalRecordSummary[];
 };
 
-function getRecordRowId(record: ClinicalRecord) {
+function getRecordRowId(record: ClinicalRecordSummary) {
   return record.id;
 }
 

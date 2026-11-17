@@ -1,30 +1,67 @@
 import "server-only";
 
+import { cache } from "react";
+import { recordAuditLog } from "@/features/audit/record-audit-log";
+import { getCurrentUser } from "@/features/auth/queries";
 import type { PatientId } from "@/features/patients/types";
 import {
-  mockClinicalRecords,
-  mockDocumentTemplates,
+  findMockClinicalRecord,
+  listMockClinicalRecords,
 } from "@/mocks/clinical-records";
-import type { ClinicalRecord, DocumentTemplate } from "./types";
+import { DOCUMENT_TEMPLATES } from "@/mocks/document-templates";
+import type {
+  ClinicalRecord,
+  ClinicalRecordSummary,
+  DocumentTemplate,
+  SessionNoteSummary,
+} from "./types";
 
-export async function listClinicalRecords(): Promise<ClinicalRecord[]> {
-  return [...mockClinicalRecords].sort((first, second) =>
+export async function listClinicalRecords(): Promise<ClinicalRecordSummary[]> {
+  return [...listMockClinicalRecords()].sort((first, second) =>
     second.updatedAt.localeCompare(first.updatedAt),
   );
 }
 
 export async function listPatientClinicalRecords(
   patientId: PatientId,
-): Promise<ClinicalRecord[]> {
-  return mockClinicalRecords.filter((record) => record.patientId === patientId);
+): Promise<ClinicalRecordSummary[]> {
+  return listMockClinicalRecords().filter(
+    (record) => record.patientId === patientId,
+  );
 }
 
-export async function getClinicalRecord(
-  recordId: string,
-): Promise<ClinicalRecord | null> {
-  return mockClinicalRecords.find((record) => record.id === recordId) ?? null;
-}
+export const getClinicalRecord = cache(
+  async (recordId: string): Promise<ClinicalRecord | null> => {
+    const [record, user] = await Promise.all([
+      findMockClinicalRecord(recordId) ?? null,
+      getCurrentUser(),
+    ]);
+    if (record && user) {
+      await recordAuditLog({
+        actorUserId: user.id,
+        action: "clinical_record.viewed",
+        entityType: "clinical_record",
+        entityId: record.id,
+      });
+    }
+    return record;
+  },
+);
 
 export async function listDocumentTemplates(): Promise<DocumentTemplate[]> {
-  return mockDocumentTemplates;
+  return DOCUMENT_TEMPLATES;
+}
+
+export async function listLatestSessionNotes(): Promise<SessionNoteSummary[]> {
+  const latestByPatient = new Map<string, SessionNoteSummary>();
+  for (const { id, patientId, createdAt, kind } of listMockClinicalRecords()) {
+    const current = latestByPatient.get(patientId);
+    if (
+      kind === "session_note" &&
+      (!current || createdAt > current.createdAt)
+    ) {
+      latestByPatient.set(patientId, { id, patientId, createdAt });
+    }
+  }
+  return [...latestByPatient.values()];
 }

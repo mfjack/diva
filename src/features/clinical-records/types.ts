@@ -19,9 +19,16 @@ export type ClinicalRecord = {
   updatedAt: string;
 };
 
+export type ClinicalRecordSummary = Omit<ClinicalRecord, "content">;
+
 export type DocumentTemplate = {
   id: DocumentTemplateId;
   kind: ClinicalRecordKind;
   title: string;
   content: string;
 };
+
+export type SessionNoteSummary = Pick<
+  ClinicalRecord,
+  "id" | "patientId" | "createdAt"
+>;

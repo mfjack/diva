@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/lib/supabase/database.types";
 
-export const CLINICAL_RECORD_CONTENT_MAX_LENGTH = 20_000;
+const CLINICAL_RECORD_CONTENT_MAX_LENGTH = 20_000;
 
 export const clinicalRecordSchema = z.object({
   patientId: z
