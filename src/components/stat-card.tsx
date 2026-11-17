@@ -20,7 +20,7 @@ export function StatCard({
   return (
     <article
       className={cn(
-        "flex flex-col gap-3 rounded-xl border p-5",
+        "flex flex-col gap-2 rounded-xl border p-4",
         isHighlighted
           ? "border-primary bg-primary text-primary-foreground"
           : "bg-card",
@@ -29,7 +29,7 @@ export function StatCard({
       <div className="flex items-center justify-between gap-3">
         <span
           className={cn(
-            "font-medium text-sm",
+            "font-medium text-xs",
             isHighlighted
               ? "text-primary-foreground/75"
               : "text-muted-foreground",
@@ -47,7 +47,7 @@ export function StatCard({
           )}
         />
       </div>
-      <p className="font-semibold text-3xl tabular-nums tracking-tight">
+      <p className="font-semibold text-xl tabular-nums tracking-tight">
         {value}
       </p>
       {hint && (

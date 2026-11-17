@@ -20,9 +20,9 @@ export function Section({
     <section className={cn("flex flex-col gap-4", className)}>
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h2 className="font-semibold text-lg">{title}</h2>
+          <h2 className="font-semibold text-base">{title}</h2>
           {description && (
-            <p className="text-muted-foreground text-sm">{description}</p>
+            <p className="text-muted-foreground text-xs">{description}</p>
           )}
         </div>
         {action}

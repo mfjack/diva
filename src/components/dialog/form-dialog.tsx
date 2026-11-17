@@ -25,6 +25,7 @@ import {
 
 const DIALOG_SIZE_CLASS_NAMES = {
   default: "sm:max-w-md",
+  medium: "sm:max-w-xl",
   large: "sm:max-w-2xl",
 } as const;
 

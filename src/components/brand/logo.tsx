@@ -12,7 +12,7 @@ export function Logo({ href, className }: LogoProps) {
       href={href}
       aria-label="Divã, página inicial"
       className={cn(
-        "font-heading text-2xl leading-none tracking-tight",
+        "font-heading font-semibold text-2xl text-primary leading-none tracking-tight",
         className,
       )}
     >

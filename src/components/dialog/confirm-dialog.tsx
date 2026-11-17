@@ -24,12 +24,21 @@ import {
 
 export const IRREVERSIBLE_ACTION_MESSAGE = "Essa ação não pode ser desfeita.";
 
+const CONFIRM_BUTTON_VARIANTS = {
+  destructive: "destructive",
+  default: "default",
+} as const;
+
+type ConfirmDialogTone = keyof typeof CONFIRM_BUTTON_VARIANTS;
+
 type ConfirmDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   title: string;
   description: ReactNode;
   confirmLabel: string;
+  cancelLabel?: string;
+  tone?: ConfirmDialogTone;
   isConfirming: boolean;
   onConfirm: () => void;
 };
@@ -40,6 +49,8 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  cancelLabel = "Cancelar",
+  tone = "destructive",
   isConfirming,
   onConfirm,
 }: ConfirmDialogProps) {
@@ -58,10 +69,10 @@ export function ConfirmDialog({
             disabled={isConfirming}
             className={DIALOG_ACTION_BUTTON_CLASS_NAME}
           >
-            Cancelar
+            {cancelLabel}
           </AlertDialogCancel>
           <Button
-            variant="destructive"
+            variant={CONFIRM_BUTTON_VARIANTS[tone]}
             className={DIALOG_ACTION_BUTTON_CLASS_NAME}
             disabled={isConfirming}
             aria-busy={isConfirming}

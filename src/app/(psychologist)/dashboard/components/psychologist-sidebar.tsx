@@ -1,6 +1,5 @@
 "use client";
 
-import { Logo } from "@/components/brand/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sidebar,
@@ -8,12 +7,11 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { getInitials } from "@/lib/get-initials";
-import { ROUTES } from "@/lib/routes";
 import {
   PSYCHOLOGIST_NAVIGATION,
   PSYCHOLOGIST_SETTINGS_ITEM,
@@ -31,13 +29,7 @@ export function PsychologistSidebar({
 }: PsychologistSidebarProps) {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="h-16 justify-center px-4 group-data-[collapsible=icon]:px-2">
-        <Logo
-          href={ROUTES.psychologist.dashboard}
-          className="group-data-[collapsible=icon]:hidden"
-        />
-      </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="pt-4">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
@@ -67,6 +59,7 @@ export function PsychologistSidebar({
                 {professionalRegistration}
               </span>
             </div>
+            <SignOutButton />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

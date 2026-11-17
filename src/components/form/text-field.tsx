@@ -9,7 +9,7 @@ import type { FormFieldProps } from "./form-field-types";
 
 type TextFieldProps<TFieldValues extends FieldValues> =
   FormFieldProps<TFieldValues> & {
-    type?: "text" | "email" | "tel" | "url" | "date" | "time" | "month";
+    type?: "text" | "email" | "tel" | "url";
   };
 
 export function TextField<TFieldValues extends FieldValues>({
