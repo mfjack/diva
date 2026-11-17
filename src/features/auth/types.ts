@@ -11,4 +11,5 @@ export type CurrentUser = {
   email: string;
   avatarUrl: string | null;
   role: UserRole;
+  acceptedTermsVersion: string | null;
 };

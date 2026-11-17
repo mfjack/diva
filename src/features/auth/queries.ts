@@ -18,7 +18,7 @@ function getAvatarUrl(metadata: Record<string, unknown>): string | null {
   return null;
 }
 
-const ACCESS_DENIED_PATH = `${ROUTES.login}?error=${LOGIN_ERROR_CODES.accessDenied}`;
+const ACCESS_DENIED_SIGN_OUT_PATH = `${ROUTES.signOut}?error=${LOGIN_ERROR_CODES.accessDenied}`;
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const supabase = await createClient();
@@ -27,7 +27,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role")
+    .select("full_name, role, terms_version")
     .eq("id", authData.user.id)
     .single();
   if (!profile) return null;
@@ -38,6 +38,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     email: authData.user.email ?? "",
     avatarUrl: getAvatarUrl(authData.user.user_metadata),
     role: profile.role,
+    acceptedTermsVersion: profile.terms_version,
   };
 });
 
@@ -48,7 +49,8 @@ export async function getAuthorizedPsychologist(): Promise<CurrentUser | null> {
 
 export async function requirePsychologist(): Promise<CurrentUser> {
   const currentUser = await getCurrentUser();
-  if (!currentUser) redirect(ROUTES.login);
-  if (currentUser.role !== "psychologist") redirect(ACCESS_DENIED_PATH);
+  if (!currentUser) redirect(ROUTES.signOut);
+  if (currentUser.role !== "psychologist")
+    redirect(ACCESS_DENIED_SIGN_OUT_PATH);
   return currentUser;
 }

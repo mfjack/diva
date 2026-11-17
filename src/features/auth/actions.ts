@@ -6,27 +6,15 @@ import {
   actionSuccess,
 } from "@/lib/action-result";
 import { env } from "@/lib/env";
+import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal";
 import { ROUTES } from "@/lib/routes";
 import { getSafeRedirectPath } from "@/lib/safe-redirect";
 import { createClient } from "@/lib/supabase/server";
-import {
-  authFailure,
-  INVALID_FORM_MESSAGE,
-  isRateLimitError,
-  toAuthResult,
-} from "./errors";
-import {
-  type ForgotPasswordInput,
-  forgotPasswordSchema,
-  type ResetPasswordInput,
-  resetPasswordSchema,
-  type SignInInput,
-  type SignUpInput,
-  signInSchema,
-  signUpSchema,
-} from "./schemas";
+import { authFailure, INVALID_FORM_MESSAGE, toAuthResult } from "./errors";
+import { type AcceptTermsInput, acceptTermsSchema } from "./schemas";
 
-export type SignUpResult = { requiresEmailConfirmation: boolean };
+const ACCEPT_TERMS_FAILED_MESSAGE =
+  "Não foi possível registrar o aceite. Tente novamente.";
 
 export type OAuthRedirect = { url: string };
 
@@ -34,36 +22,6 @@ function buildAuthCallbackUrl(nextPath: string): string {
   const callbackUrl = new URL(ROUTES.authCallback, env.NEXT_PUBLIC_SITE_URL);
   callbackUrl.searchParams.set("next", nextPath);
   return callbackUrl.toString();
-}
-
-export async function signIn(input: SignInInput): Promise<ActionResult> {
-  const parsedInput = signInSchema.safeParse(input);
-  if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsedInput.data);
-  return toAuthResult(error);
-}
-
-export async function signUp(
-  input: SignUpInput,
-): Promise<ActionResult<SignUpResult>> {
-  const parsedInput = signUpSchema.safeParse(input);
-  if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
-
-  const { fullName, email, password, nextPath } = parsedInput.data;
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: fullName },
-      emailRedirectTo: buildAuthCallbackUrl(getSafeRedirectPath(nextPath)),
-    },
-  });
-  if (error) return authFailure(error);
-
-  return actionSuccess({ requiresEmailConfirmation: !data.session });
 }
 
 export async function getGoogleSignInUrl(
@@ -82,38 +40,22 @@ export async function getGoogleSignInUrl(
   return actionSuccess({ url: data.url });
 }
 
-export async function requestPasswordReset(
-  input: ForgotPasswordInput,
-): Promise<ActionResult> {
-  const parsedInput = forgotPasswordSchema.safeParse(input);
-  if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(
-    parsedInput.data.email,
-    { redirectTo: buildAuthCallbackUrl(ROUTES.resetPassword) },
-  );
-
-  if (error && isRateLimitError(error)) return authFailure(error);
-
-  return actionSuccess();
-}
-
-export async function resetPassword(
-  input: ResetPasswordInput,
-): Promise<ActionResult> {
-  const parsedInput = resetPasswordSchema.safeParse(input);
-  if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.updateUser({
-    password: parsedInput.data.password,
-  });
-  return toAuthResult(error);
-}
-
 export async function signOut(): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.auth.signOut();
   return toAuthResult(error);
+}
+
+export async function acceptTerms(
+  input: AcceptTermsInput,
+): Promise<ActionResult> {
+  const parsedInput = acceptTermsSchema.safeParse(input);
+  if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("accept_terms", {
+    p_version: LEGAL_DOCUMENTS_VERSION,
+  });
+  if (error) return actionFailure(ACCEPT_TERMS_FAILED_MESSAGE);
+  return actionSuccess();
 }

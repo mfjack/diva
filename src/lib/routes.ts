@@ -1,10 +1,11 @@
 export const ROUTES = {
   home: "/",
   login: "/login",
-  signUp: "/sign-up",
-  forgotPassword: "/forgot-password",
-  resetPassword: "/reset-password",
   authCallback: "/auth/callback",
+  signOut: "/auth/sign-out",
+  acceptTerms: "/accept-terms",
+  terms: "/terms",
+  privacy: "/privacy",
   psychologist: {
     dashboard: "/dashboard",
     home: "/dashboard/schedule",
@@ -17,22 +18,19 @@ export const ROUTES = {
   },
 } as const;
 
-export const AUTH_ROUTES = [
-  ROUTES.login,
-  ROUTES.signUp,
-  ROUTES.forgotPassword,
-] as const;
+export const AUTH_ROUTES = [ROUTES.login] as const;
 
-export const PUBLIC_ROUTES = [...AUTH_ROUTES, "/auth"] as const;
+export const PUBLIC_ROUTES = [
+  ...AUTH_ROUTES,
+  "/auth",
+  ROUTES.terms,
+  ROUTES.privacy,
+] as const;
 
 export const LOGIN_ERROR_CODES = {
   invalidLink: "invalid-link",
   accessDenied: "access-denied",
 } as const;
-
-export function buildAuthRoute(route: string, nextPath?: string): string {
-  return nextPath ? `${route}?next=${encodeURIComponent(nextPath)}` : route;
-}
 
 export function buildNewSessionNoteRoute(patientId: string): string {
   const searchParams = new URLSearchParams({ patientId, kind: "session_note" });

@@ -743,6 +743,8 @@ export type Database = {
           id: string
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          terms_accepted_at: string | null
+          terms_version: string | null
           updated_at: string
         }
         Insert: {
@@ -751,6 +753,8 @@ export type Database = {
           id: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string
         }
         Update: {
@@ -759,6 +763,8 @@ export type Database = {
           id?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -968,6 +974,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_terms: { Args: { p_version: string }; Returns: undefined }
       cancel_appointments: {
         Args: { p_cancellations: Json; p_reason: string }
         Returns: number
