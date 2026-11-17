@@ -1,9 +1,9 @@
 import type { CurrentUser, UserId } from "@/features/auth/types";
-import { DEFAULT_PRACTICE_SETTINGS } from "./practice-defaults";
 
 export const mockCurrentUser: CurrentUser = {
-  id: "user-psychologist" as UserId,
-  fullName: DEFAULT_PRACTICE_SETTINGS.psychologistName,
-  email: "helena.duarte@psicologia.com.br",
+  id: "00000000-0000-4000-8000-000000000001" as UserId,
+  fullName: "Profissional de teste",
+  email: "teste@diva.local",
+  avatarUrl: null,
   role: "psychologist",
 };

@@ -1,6 +1,7 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { getInitials } from "@/lib/get-initials";
+import { ROUTES } from "@/lib/routes";
 import {
   PSYCHOLOGIST_NAVIGATION,
   PSYCHOLOGIST_SETTINGS_ITEM,
@@ -20,12 +22,14 @@ import { SidebarLink } from "./sidebar-link";
 
 type PsychologistSidebarProps = {
   psychologistName: string;
-  professionalRegistration: string;
+  professionalRegistration: string | null;
+  avatarUrl: string | null;
 };
 
 export function PsychologistSidebar({
   psychologistName,
   professionalRegistration,
+  avatarUrl,
 }: PsychologistSidebarProps) {
   return (
     <Sidebar collapsible="icon">
@@ -47,6 +51,14 @@ export function PsychologistSidebar({
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-3 rounded-lg p-1.5">
             <Avatar className="size-8 rounded-lg after:hidden">
+              {avatarUrl && (
+                <AvatarImage
+                  src={avatarUrl}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="rounded-lg"
+                />
+              )}
               <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-xs">
                 {getInitials(psychologistName)}
               </AvatarFallback>
@@ -55,9 +67,18 @@ export function PsychologistSidebar({
               <span className="truncate font-medium text-sidebar-accent-foreground text-sm">
                 {psychologistName}
               </span>
-              <span className="truncate text-xs">
-                {professionalRegistration}
-              </span>
+              {professionalRegistration ? (
+                <span className="truncate text-xs">
+                  {professionalRegistration}
+                </span>
+              ) : (
+                <Link
+                  href={ROUTES.psychologist.settings}
+                  className="truncate text-warning text-xs underline-offset-4 hover:underline"
+                >
+                  Adicione seu CRP
+                </Link>
+              )}
             </div>
             <SignOutButton />
           </SidebarMenuItem>

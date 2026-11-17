@@ -9,5 +9,6 @@ export type CurrentUser = {
   id: UserId;
   fullName: string;
   email: string;
+  avatarUrl: string | null;
   role: UserRole;
 };

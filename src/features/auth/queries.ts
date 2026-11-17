@@ -8,6 +8,18 @@ import { createClient } from "@/lib/supabase/server";
 import { mockCurrentUser } from "@/mocks/current-user";
 import type { CurrentUser, UserId } from "./types";
 
+const AVATAR_METADATA_KEYS = ["avatar_url", "picture"] as const;
+
+function getAvatarUrl(metadata: Record<string, unknown>): string | null {
+  for (const key of AVATAR_METADATA_KEYS) {
+    const value = metadata[key];
+    if (typeof value === "string" && value.startsWith("https://")) {
+      return value;
+    }
+  }
+  return null;
+}
+
 const ACCESS_DENIED_PATH = `${ROUTES.login}?error=${LOGIN_ERROR_CODES.accessDenied}`;
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
@@ -28,6 +40,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     id: authData.user.id as UserId,
     fullName: profile.full_name,
     email: authData.user.email ?? "",
+    avatarUrl: getAvatarUrl(authData.user.user_metadata),
     role: profile.role,
   };
 });

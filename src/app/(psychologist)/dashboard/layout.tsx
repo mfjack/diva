@@ -12,7 +12,7 @@ import { PsychologistSidebar } from "./components/psychologist-sidebar";
 export default async function PsychologistLayout({
   children,
 }: LayoutProps<"/dashboard">) {
-  const [settings] = await Promise.all([
+  const [settings, psychologist] = await Promise.all([
     getPracticeSettings(),
     requirePsychologist(),
   ]);
@@ -22,6 +22,7 @@ export default async function PsychologistLayout({
       <PsychologistSidebar
         psychologistName={settings.psychologistName}
         professionalRegistration={settings.professionalRegistration}
+        avatarUrl={psychologist.avatarUrl}
       />
       <SidebarInset>
         <div className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:hidden">
