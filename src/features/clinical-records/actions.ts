@@ -14,12 +14,10 @@ import {
   actionSuccess,
 } from "@/lib/action-result";
 import { ROUTES } from "@/lib/routes";
-import {
-  hasMockClinicalRecord,
-  insertMockClinicalRecord,
-  updateMockClinicalRecord,
-} from "@/mocks/clinical-records";
+import { createClient } from "@/lib/supabase/server";
+import { encryptClinicalContent } from "./content-encryption";
 import { CLINICAL_RECORD_ACTION_MESSAGES } from "./messages";
+import { hasClinicalRecord } from "./queries";
 import { type ClinicalRecordInput, clinicalRecordSchema } from "./schemas";
 import type { ClinicalRecordId } from "./types";
 
@@ -37,24 +35,33 @@ export async function saveClinicalRecord(
     return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.patientNotFound);
   }
 
-  const now = new Date().toISOString();
   const fields = {
-    patientId: patient.id,
-    patientName: patient.fullName,
+    patient_id: patient.id,
     kind: parsedInput.data.kind,
     title: parsedInput.data.title,
-    content: parsedInput.data.content,
-    updatedAt: now,
+    encrypted_content: encryptClinicalContent(parsedInput.data.content),
   };
+  const supabase = await createClient();
 
-  const savedRecordId = recordId ?? (crypto.randomUUID() as ClinicalRecordId);
+  let savedRecordId: ClinicalRecordId;
   if (recordId) {
-    if (!hasMockClinicalRecord(recordId)) {
+    if (!(await hasClinicalRecord(recordId))) {
       return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.recordNotFound);
     }
-    updateMockClinicalRecord(recordId, fields);
+    const { error } = await supabase
+      .from("clinical_records")
+      .update(fields)
+      .eq("id", recordId);
+    if (error) return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.saveFailed);
+    savedRecordId = recordId;
   } else {
-    insertMockClinicalRecord({ id: savedRecordId, createdAt: now, ...fields });
+    const { data, error } = await supabase
+      .from("clinical_records")
+      .insert({ ...fields, psychologist_id: psychologist.id })
+      .select("id")
+      .single();
+    if (error) return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.saveFailed);
+    savedRecordId = data.id as ClinicalRecordId;
   }
 
   await recordAuditLog({
