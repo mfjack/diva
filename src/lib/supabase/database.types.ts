@@ -739,7 +739,7 @@ export type Database = {
           minimum_booking_notice_hours: number
           office_address: string | null
           pix_key: string | null
-          professional_registration: string
+          professional_registration: string | null
           psychologist_id: string
           session_duration_minutes: number
           updated_at: string
@@ -753,7 +753,7 @@ export type Database = {
           minimum_booking_notice_hours?: number
           office_address?: string | null
           pix_key?: string | null
-          professional_registration: string
+          professional_registration?: string | null
           psychologist_id: string
           session_duration_minutes: number
           updated_at?: string
@@ -767,7 +767,7 @@ export type Database = {
           minimum_booking_notice_hours?: number
           office_address?: string | null
           pix_key?: string | null
-          professional_registration?: string
+          professional_registration?: string | null
           psychologist_id?: string
           session_duration_minutes?: number
           updated_at?: string
