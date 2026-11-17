@@ -7,11 +7,83 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.18"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
+      appointment_series: {
+        Row: {
+          created_at: string
+          id: string
+          patient_id: string
+          psychologist_id: string
+          repeat: Database["public"]["Enums"]["session_repeat"]
+          repeat_until: string
+          starts_on: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          patient_id: string
+          psychologist_id: string
+          repeat: Database["public"]["Enums"]["session_repeat"]
+          repeat_until: string
+          starts_on: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          patient_id?: string
+          psychologist_id?: string
+          repeat?: Database["public"]["Enums"]["session_repeat"]
+          repeat_until?: string
+          starts_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_series_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_series_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           cancellation_reason: string | null
@@ -27,6 +99,7 @@ export type Database = {
           price_cents: number
           psychologist_id: string
           rescheduled_from_id: string | null
+          series_id: string | null
           starts_at: string
           status: Database["public"]["Enums"]["appointment_status"]
           updated_at: string
@@ -34,7 +107,9 @@ export type Database = {
         Insert: {
           cancellation_reason?: string | null
           cancelled_at?: string | null
-          cancelled_by?: Database["public"]["Enums"]["cancellation_actor"] | null
+          cancelled_by?:
+            | Database["public"]["Enums"]["cancellation_actor"]
+            | null
           created_at?: string
           ends_at: string
           id?: string
@@ -45,6 +120,7 @@ export type Database = {
           price_cents: number
           psychologist_id: string
           rescheduled_from_id?: string | null
+          series_id?: string | null
           starts_at: string
           status?: Database["public"]["Enums"]["appointment_status"]
           updated_at?: string
@@ -52,7 +128,9 @@ export type Database = {
         Update: {
           cancellation_reason?: string | null
           cancelled_at?: string | null
-          cancelled_by?: Database["public"]["Enums"]["cancellation_actor"] | null
+          cancelled_by?:
+            | Database["public"]["Enums"]["cancellation_actor"]
+            | null
           created_at?: string
           ends_at?: string
           id?: string
@@ -63,6 +141,7 @@ export type Database = {
           price_cents?: number
           psychologist_id?: string
           rescheduled_from_id?: string | null
+          series_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["appointment_status"]
           updated_at?: string
@@ -87,6 +166,13 @@ export type Database = {
             columns: ["rescheduled_from_id"]
             isOneToOne: false
             referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_series"
             referencedColumns: ["id"]
           },
         ]
@@ -307,6 +393,146 @@ export type Database = {
           },
         ]
       }
+      expense_attachments: {
+        Row: {
+          content_type: string
+          created_at: string
+          expense_id: string
+          file_name: string
+          id: string
+          psychologist_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          expense_id: string
+          file_name: string
+          id?: string
+          psychologist_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          expense_id?: string
+          file_name?: string
+          id?: string
+          psychologist_id?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_attachments_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_attachments_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_payments: {
+        Row: {
+          created_at: string
+          due_on: string
+          expense_id: string
+          id: string
+          paid_on: string
+          psychologist_id: string
+        }
+        Insert: {
+          created_at?: string
+          due_on: string
+          expense_id: string
+          id?: string
+          paid_on: string
+          psychologist_id: string
+        }
+        Update: {
+          created_at?: string
+          due_on?: string
+          expense_id?: string
+          id?: string
+          paid_on?: string
+          psychologist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_payments_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_payments_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount_cents: number
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          description: string
+          ends_on: string | null
+          id: string
+          installment_count: number | null
+          notes: string | null
+          psychologist_id: string
+          recurrence: Database["public"]["Enums"]["expense_recurrence"]
+          starts_on: string
+        }
+        Insert: {
+          amount_cents: number
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          description: string
+          ends_on?: string | null
+          id?: string
+          installment_count?: number | null
+          notes?: string | null
+          psychologist_id: string
+          recurrence?: Database["public"]["Enums"]["expense_recurrence"]
+          starts_on: string
+        }
+        Update: {
+          amount_cents?: number
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          description?: string
+          ends_on?: string | null
+          id?: string
+          installment_count?: number | null
+          notes?: string | null
+          psychologist_id?: string
+          recurrence?: Database["public"]["Enums"]["expense_recurrence"]
+          starts_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           birth_date: string | null
@@ -320,8 +546,8 @@ export type Database = {
           health_insurance: string | null
           id: string
           notes: string | null
-          preferred_modality: Database["public"]["Enums"]["appointment_modality"]
           phone: string | null
+          preferred_modality: Database["public"]["Enums"]["appointment_modality"]
           psychologist_id: string
           session_price_cents: number | null
           status: Database["public"]["Enums"]["patient_status"]
@@ -340,8 +566,8 @@ export type Database = {
           health_insurance?: string | null
           id?: string
           notes?: string | null
-          preferred_modality?: Database["public"]["Enums"]["appointment_modality"]
           phone?: string | null
+          preferred_modality?: Database["public"]["Enums"]["appointment_modality"]
           psychologist_id: string
           session_price_cents?: number | null
           status?: Database["public"]["Enums"]["patient_status"]
@@ -360,8 +586,8 @@ export type Database = {
           health_insurance?: string | null
           id?: string
           notes?: string | null
-          preferred_modality?: Database["public"]["Enums"]["appointment_modality"]
           phone?: string | null
+          preferred_modality?: Database["public"]["Enums"]["appointment_modality"]
           psychologist_id?: string
           session_price_cents?: number | null
           status?: Database["public"]["Enums"]["patient_status"]
@@ -556,6 +782,65 @@ export type Database = {
           },
         ]
       }
+      study_notes: {
+        Row: {
+          content: Json
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_pinned: boolean
+          kind: Database["public"]["Enums"]["study_note_kind"]
+          plain_text: string
+          psychologist_id: string
+          source_author: string | null
+          source_title: string | null
+          source_url: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_pinned?: boolean
+          kind?: Database["public"]["Enums"]["study_note_kind"]
+          plain_text?: string
+          psychologist_id: string
+          source_author?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_pinned?: boolean
+          kind?: Database["public"]["Enums"]["study_note_kind"]
+          plain_text?: string
+          psychologist_id?: string
+          source_author?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_notes_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -565,12 +850,42 @@ export type Database = {
     }
     Enums: {
       appointment_modality: "in_person" | "online"
-      appointment_status: "scheduled" | "confirmed" | "completed" | "cancelled" | "no_show"
+      appointment_status:
+        | "scheduled"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "no_show"
       cancellation_actor: "patient" | "psychologist"
-      clinical_record_kind: "session_note" | "report" | "certificate" | "referral"
+      clinical_record_kind:
+        | "session_note"
+        | "report"
+        | "certificate"
+        | "referral"
+      expense_category:
+        | "supervision"
+        | "education"
+        | "materials"
+        | "office"
+        | "software"
+        | "taxes"
+        | "other"
+      expense_recurrence: "once" | "weekly" | "monthly" | "installments"
       patient_status: "active" | "paused" | "discharged"
-      payment_method: "pix" | "cash" | "credit_card" | "debit_card" | "bank_transfer"
+      payment_method:
+        | "pix"
+        | "cash"
+        | "credit_card"
+        | "debit_card"
+        | "bank_transfer"
       payment_status: "pending" | "paid" | "waived" | "refunded"
+      session_repeat: "weekly" | "biweekly"
+      study_note_kind:
+        | "note"
+        | "reflection"
+        | "reading"
+        | "supervision"
+        | "course"
       user_role: "psychologist" | "patient"
     }
     CompositeTypes: {
@@ -697,15 +1012,53 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       appointment_modality: ["in_person", "online"],
-      appointment_status: ["scheduled", "confirmed", "completed", "cancelled", "no_show"],
+      appointment_status: [
+        "scheduled",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
       cancellation_actor: ["patient", "psychologist"],
-      clinical_record_kind: ["session_note", "report", "certificate", "referral"],
+      clinical_record_kind: [
+        "session_note",
+        "report",
+        "certificate",
+        "referral",
+      ],
+      expense_category: [
+        "supervision",
+        "education",
+        "materials",
+        "office",
+        "software",
+        "taxes",
+        "other",
+      ],
+      expense_recurrence: ["once", "weekly", "monthly", "installments"],
       patient_status: ["active", "paused", "discharged"],
-      payment_method: ["pix", "cash", "credit_card", "debit_card", "bank_transfer"],
+      payment_method: [
+        "pix",
+        "cash",
+        "credit_card",
+        "debit_card",
+        "bank_transfer",
+      ],
       payment_status: ["pending", "paid", "waived", "refunded"],
+      session_repeat: ["weekly", "biweekly"],
+      study_note_kind: [
+        "note",
+        "reflection",
+        "reading",
+        "supervision",
+        "course",
+      ],
       user_role: ["psychologist", "patient"],
     },
   },
