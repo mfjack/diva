@@ -2,10 +2,8 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { isMockAuth } from "@/lib/auth-mode";
 import { LOGIN_ERROR_CODES, ROUTES } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
-import { mockCurrentUser } from "@/mocks/current-user";
 import type { CurrentUser, UserId } from "./types";
 
 const AVATAR_METADATA_KEYS = ["avatar_url", "picture"] as const;
@@ -23,8 +21,6 @@ function getAvatarUrl(metadata: Record<string, unknown>): string | null {
 const ACCESS_DENIED_PATH = `${ROUTES.login}?error=${LOGIN_ERROR_CODES.accessDenied}`;
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
-  if (isMockAuth) return mockCurrentUser;
-
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) return null;

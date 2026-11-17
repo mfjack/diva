@@ -3,7 +3,6 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { actionFailure } from "@/lib/action-result";
-import { isMockAuth } from "@/lib/auth-mode";
 import { env } from "@/lib/env";
 import { AUTH_ROUTES, PUBLIC_ROUTES, ROUTES } from "@/lib/routes";
 import type { Database } from "./database.types";
@@ -42,8 +41,6 @@ function redirectKeepingCookies(url: URL, sourceResponse: NextResponse) {
 }
 
 export async function updateSession(request: NextRequest) {
-  if (isMockAuth) return NextResponse.next({ request });
-
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(

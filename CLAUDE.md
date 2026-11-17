@@ -27,10 +27,12 @@ Stack: Next.js (App Router) · React · TypeScript · Tailwind · shadcn/ui (Bas
 - Schemas Zod são a fonte única de verdade: tipos vêm de `z.infer` e o mesmo schema valida formulário e servidor.
 - Variáveis de ambiente só via `env` (`src/lib/env.ts`), validadas com Zod.
 
-## Fase atual: frontend com dados de exemplo
-- As telas usam dados de exemplo de `src/mocks/`, servidos pelas funções de `src/features/<domain>/queries.ts`. Ao ligar o Supabase, troque só o corpo dessas funções; as telas não mudam.
-- As Server Actions já validam com Zod e retornam `ActionResult`, mas ainda não gravam nada. As telas aplicam a mudança localmente no `onSuccess`.
-- Autenticação já é real (Supabase Auth): login, cadastro, Google, esqueci a senha e nova senha em `src/app/(auth)`, com o callback em `src/app/auth/callback`. Precisa de um projeto Supabase configurado no `.env.local`. Para navegar sem Supabase, use `AUTH_MODE=mock` (`src/lib/auth-mode.ts`): o proxy libera as rotas e `getCurrentUser` devolve `mockCurrentUser`. O modo é recusado em produção.
+## Backend no Supabase
+- Todos os dados vêm do Supabase pelas funções de `src/features/<domain>/queries.ts`, com RLS separando os dados de cada profissional. Não existem dados de exemplo nem modo de teste.
+- Regras e transações no banco: criar uma sessão gera o pagamento (gatilho), cancelar deixa o pagamento sem cobrança e reagendar ou mudar a forma de pagamento recalcula o vencimento (`payment_due_date`). Criar sessões, cancelar, excluir paciente e registrar ou desfazer pagamento são funções RPC.
+- Sessões que já terminaram viram realizadas pela RPC `complete_finished_appointments`, chamada antes das leituras da agenda e dos pacientes.
+- Anexos de despesas ficam no bucket privado `expense-attachments`, no caminho `<psychologist_id>/<expense_id>/<attachment_id>`.
+- Autenticação pelo Supabase Auth: login, cadastro, Google, esqueci a senha e nova senha em `src/app/(auth)`, com o callback em `src/app/auth/callback`.
 
 ## Dados
 - Dinheiro sempre em centavos inteiros (`Cents`, `src/lib/money.ts`), nunca `float`. Conversão só na borda (input e `formatCurrency`).
