@@ -148,7 +148,7 @@ export function ScheduleBoard({
           appointments={weekAppointments}
           now={now}
           onSelect={handleSelect}
-          className="lg:min-h-0 lg:flex-1 lg:content-start lg:overflow-y-auto"
+          className="lg:min-h-0 lg:flex-1"
         />
       </section>
 
