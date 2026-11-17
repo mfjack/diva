@@ -1,9 +1,17 @@
 import { CircleCheck, MessageCircle } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Appointment } from "@/features/appointments/types";
 import type { Patient } from "@/features/patients/types";
-import { getChargeWhatsAppUrl } from "@/features/payments/charge-message";
+import {
+  ChargeDialog,
+  type ChargeTarget,
+} from "@/features/payments/components/charge-dialog";
 import { PaymentStatusBadge } from "@/features/payments/components/payment-status-badge";
+import { UndoPaymentButton } from "@/features/payments/components/undo-payment-button";
+import { getPaymentDueDate } from "@/features/payments/due-date";
+import { isOverdue } from "@/features/payments/overdue";
+import { toDateKey } from "@/lib/dates";
 import { formatCurrency } from "@/lib/format";
 import { DetailItem, DetailsSection } from "./details-section";
 
@@ -15,6 +23,29 @@ type AppointmentPaymentSectionProps = {
   onRegisterPaymentRequest: (appointment: Appointment) => void;
 };
 
+function getChargeTarget(
+  appointment: Appointment,
+  patient: Patient | null,
+): ChargeTarget | null {
+  if (!patient?.phone) return null;
+  const isPaymentOverdue = isOverdue({
+    status: appointment.paymentStatus,
+    dueDate: getPaymentDueDate(patient, toDateKey(appointment.startsAt)),
+    sessionStartsAt: appointment.startsAt,
+  });
+  if (!isPaymentOverdue) return null;
+  return {
+    patientName: appointment.patientName,
+    patientPhone: patient.phone,
+    items: [
+      {
+        sessionStartsAt: appointment.startsAt,
+        amountCents: appointment.priceCents,
+      },
+    ],
+  };
+}
+
 export function AppointmentPaymentSection({
   appointment,
   patient,
@@ -22,22 +53,16 @@ export function AppointmentPaymentSection({
   isSessionUpcoming,
   onRegisterPaymentRequest,
 }: AppointmentPaymentSectionProps) {
+  const [isChargeOpen, setIsChargeOpen] = useState(false);
   const isPending = appointment.paymentStatus === "pending";
-  const chargeUrl =
-    isPending && !isSessionUpcoming
-      ? getChargeWhatsAppUrl(
-          {
-            patientName: appointment.patientName,
-            patientPhone: patient?.phone ?? null,
-            amountCents: appointment.priceCents,
-            sessionStartsAt: appointment.startsAt,
-          },
-          pixKey,
-        )
-      : null;
+  const chargeTarget = getChargeTarget(appointment, patient);
 
   function handleRegisterPayment() {
     onRegisterPaymentRequest(appointment);
+  }
+
+  function handleOpenCharge() {
+    setIsChargeOpen(true);
   }
 
   return (
@@ -50,6 +75,17 @@ export function AppointmentPaymentSection({
           status={appointment.paymentStatus}
           isSessionUpcoming={isSessionUpcoming}
         />
+        {appointment.paymentStatus === "paid" && (
+          <UndoPaymentButton
+            payment={{
+              appointmentId: appointment.id,
+              patientName: appointment.patientName,
+              sessionStartsAt: appointment.startsAt,
+              amountCents: appointment.priceCents,
+              receiptNumber: null,
+            }}
+          />
+        )}
       </DetailItem>
       {isPending && (
         <div className="flex flex-wrap gap-2 pt-3">
@@ -57,21 +93,19 @@ export function AppointmentPaymentSection({
             <CircleCheck aria-hidden />
             Registrar pagamento
           </Button>
-          {chargeUrl && (
-            <Button
-              variant="ghost"
-              size="lg"
-              nativeButton={false}
-              render={
-                <a href={chargeUrl} target="_blank" rel="noopener noreferrer" />
-              }
-            >
+          {chargeTarget && (
+            <Button variant="ghost" size="lg" onClick={handleOpenCharge}>
               <MessageCircle aria-hidden />
               Cobrar no WhatsApp
             </Button>
           )}
         </div>
       )}
+      <ChargeDialog
+        target={isChargeOpen ? chargeTarget : null}
+        pixKey={pixKey}
+        onOpenChange={setIsChargeOpen}
+      />
     </DetailsSection>
   );
 }

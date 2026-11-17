@@ -8,10 +8,14 @@ import { createDataTableColumnHelper } from "@/components/data-table/data-table-
 import { DataTableRowActionButton } from "@/components/data-table/data-table-row-action-button";
 import { useDataTable } from "@/components/data-table/use-data-table";
 import { StatusBadge } from "@/components/status-badge";
-import { getChargeWhatsAppUrl } from "@/features/payments/charge-message";
 import { PaymentStatusBadge } from "@/features/payments/components/payment-status-badge";
+import { UndoPaymentButton } from "@/features/payments/components/undo-payment-button";
 import { PAYMENT_METHOD_LABELS } from "@/features/payments/labels";
-import { getDaysSinceSession, isOverdue } from "@/features/payments/overdue";
+import {
+  formatOverdueLabel,
+  getDaysOverdue,
+  isOverdue,
+} from "@/features/payments/overdue";
 import type { Payment } from "@/features/payments/types";
 import { formatCurrency, formatDate } from "@/lib/format";
 
@@ -19,10 +23,10 @@ const columnHelper = createDataTableColumnHelper<Payment>();
 
 type PaymentsTableProps = {
   payments: Payment[];
-  pixKey: string | null;
   toolbarActions: ReactNode;
   emptyState: ReactNode;
   onRegisterPayment: (payment: Payment) => void;
+  onChargePayment: (payment: Payment) => void;
 };
 
 function getPaymentRowId(payment: Payment) {
@@ -31,10 +35,10 @@ function getPaymentRowId(payment: Payment) {
 
 export function PaymentsTable({
   payments,
-  pixKey,
   toolbarActions,
   emptyState,
   onRegisterPayment,
+  onChargePayment,
 }: PaymentsTableProps) {
   const columns = useMemo(
     () =>
@@ -53,7 +57,7 @@ export function PaymentsTable({
               {formatDate(row.original.sessionStartsAt)}
               {isOverdue(row.original) && (
                 <StatusBadge tone="destructive">
-                  {getDaysSinceSession(row.original)} dias
+                  {formatOverdueLabel(getDaysOverdue(row.original))}
                 </StatusBadge>
               )}
             </span>
@@ -90,19 +94,16 @@ export function PaymentsTable({
           header: () => <span className="sr-only">Ações</span>,
           cell: ({ row }) => {
             const payment = row.original;
-            const chargeUrl = getChargeWhatsAppUrl(payment, pixKey);
 
             if (payment.status === "pending") {
               return (
                 <div className="flex justify-end gap-2">
-                  {chargeUrl && (
+                  {payment.patientPhone && isOverdue(payment) && (
                     <DataTableRowActionButton
                       label="Cobrar no WhatsApp"
                       accessibleLabel={`Cobrar ${payment.patientName} no WhatsApp`}
                       icon={MessageCircle}
-                      onClick={() =>
-                        window.open(chargeUrl, "_blank", "noopener,noreferrer")
-                      }
+                      onClick={() => onChargePayment(payment)}
                     />
                   )}
                   <DataTableRowActionButton
@@ -116,7 +117,10 @@ export function PaymentsTable({
             }
 
             return (
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                {payment.status === "paid" && (
+                  <UndoPaymentButton payment={payment} />
+                )}
                 {payment.status === "paid" && (
                   <DataTableRowActionButton
                     label="Baixar recibo"
@@ -132,7 +136,7 @@ export function PaymentsTable({
           },
         }),
       ]),
-    [pixKey, onRegisterPayment],
+    [onRegisterPayment, onChargePayment],
   );
 
   const table = useDataTable({

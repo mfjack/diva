@@ -21,14 +21,18 @@ import { listPatientAppointments } from "@/features/appointments/queries";
 import { listPatientClinicalRecords } from "@/features/clinical-records/queries";
 import { PatientStatusBadge } from "@/features/patients/components/patient-status-badge";
 import { getPatient } from "@/features/patients/queries";
+import { describePaymentTerms } from "@/features/payments/labels";
+import { isOverdue, isPaymentDue } from "@/features/payments/overdue";
 import { listPatientPayments } from "@/features/payments/queries";
 import type { Payment } from "@/features/payments/types";
+import { getPracticeSettings } from "@/features/practice-settings/queries";
 import { dateKeyToLocalDate, formatDateKey } from "@/lib/dates";
 import { formatCurrency, formatShortDate, formatTime } from "@/lib/format";
 import { formatCpf } from "@/lib/masks";
 import type { Cents } from "@/lib/money";
 import { ROUTES } from "@/lib/routes";
 import { PatientAppointmentsList } from "./components/patient-appointments-list";
+import { PatientChargeButton } from "./components/patient-charge-button";
 import { PatientPaymentsList } from "./components/patient-payments-list";
 import { PatientRecordsList } from "./components/patient-records-list";
 
@@ -67,11 +71,18 @@ export default async function PatientPage({
   const patient = await getPatient(patientId);
   if (!patient) notFound();
 
-  const [appointments, payments, records] = await Promise.all([
+  const [appointments, payments, records, settings] = await Promise.all([
     listPatientAppointments(patient.id),
     listPatientPayments(patient.id),
     listPatientClinicalRecords(patient.id),
+    getPracticeSettings(),
   ]);
+  const duePayments = payments.filter((payment) => isPaymentDue(payment));
+  const overduePayments = duePayments.filter((payment) => isOverdue(payment));
+  const now = new Date().toISOString();
+  const pastAppointments = appointments.filter(
+    ({ startsAt }) => startsAt <= now,
+  );
 
   return (
     <>
@@ -79,17 +90,27 @@ export default async function PatientPage({
         title={patient.fullName}
         description={`Em acompanhamento desde ${formatDateKey(patient.startedAt)}`}
         actions={
-          <Button
-            nativeButton={false}
-            render={
-              <Link
-                href={`${ROUTES.psychologist.records}/new?patientId=${patient.id}`}
+          <>
+            {patient.phone && overduePayments.length > 0 && (
+              <PatientChargeButton
+                patientName={patient.fullName}
+                patientPhone={patient.phone}
+                items={overduePayments}
+                pixKey={settings.pixKey}
               />
-            }
-          >
-            <FilePlus2 aria-hidden />
-            Novo documento
-          </Button>
+            )}
+            <Button
+              nativeButton={false}
+              render={
+                <Link
+                  href={`${ROUTES.psychologist.records}/new?patientId=${patient.id}`}
+                />
+              }
+            >
+              <FilePlus2 aria-hidden />
+              Novo documento
+            </Button>
+          </>
         }
       />
       <PageContent>
@@ -111,7 +132,7 @@ export default async function PatientPage({
           <StatCard
             label="Sessões realizadas"
             value={String(patient.completedSessionCount)}
-            hint={`${appointments.length} no histórico`}
+            hint={`${pastAppointments.length} no histórico`}
             icon={CircleCheck}
           />
           <StatCard
@@ -123,7 +144,11 @@ export default async function PatientPage({
           <StatCard
             label="Em aberto"
             value={formatCurrency(patient.pendingAmountCents)}
-            hint="Sessões ainda não pagas"
+            hint={
+              overduePayments.length > 0
+                ? "Há pagamentos em atraso"
+                : "Sessões ainda não pagas"
+            }
             icon={Hourglass}
           />
         </div>
@@ -164,9 +189,9 @@ export default async function PatientPage({
                 <InfoItem label="CPF">{formatCpf(patient.cpf)}</InfoItem>
               )}
               <InfoItem label="Pagamento">
-                {patient.healthInsurance
-                  ? `Convênio · ${patient.healthInsurance}`
-                  : "Particular"}
+                {describePaymentTerms(patient)}
+                {patient.healthInsurance &&
+                  ` · Convênio ${patient.healthInsurance}`}
               </InfoItem>
               <InfoItem label="Modalidade">
                 {APPOINTMENT_MODALITY_LABELS[patient.preferredModality]}
@@ -191,8 +216,8 @@ export default async function PatientPage({
           </aside>
 
           <div className="flex flex-col gap-8 lg:col-span-2">
-            <Section title="Sessões">
-              <PatientAppointmentsList appointments={appointments} />
+            <Section title="Sessões anteriores">
+              <PatientAppointmentsList appointments={pastAppointments} />
             </Section>
             <Section title="Financeiro">
               <PatientPaymentsList payments={payments} />

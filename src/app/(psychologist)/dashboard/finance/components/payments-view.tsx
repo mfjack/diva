@@ -11,6 +11,10 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ChargeDialog,
+  type ChargeTarget,
+} from "@/features/payments/components/charge-dialog";
 import { RegisterPaymentDialog } from "@/features/payments/components/register-payment-dialog";
 import type { Payment, PaymentStatus } from "@/features/payments/types";
 import { PaymentsTable } from "./payments-table";
@@ -34,6 +38,15 @@ function matchesFilter(status: PaymentStatus, filter: StatusFilter): boolean {
   return filter === "all" || status === filter;
 }
 
+function toChargeTarget(payment: Payment): ChargeTarget | null {
+  if (!payment.patientPhone) return null;
+  return {
+    patientName: payment.patientName,
+    patientPhone: payment.patientPhone,
+    items: [payment],
+  };
+}
+
 function isStatusFilter(value: unknown): value is StatusFilter {
   return STATUS_FILTERS.some((filter) => filter === value);
 }
@@ -42,6 +55,7 @@ export function PaymentsView({ payments, pixKey }: PaymentsViewProps) {
   const [paymentToRegister, setPaymentToRegister] = useState<Payment | null>(
     null,
   );
+  const [chargeTarget, setChargeTarget] = useState<ChargeTarget | null>(null);
   const [statusFilter, setStatusFilter] = useQueryState(
     "status",
     parseAsStringLiteral(STATUS_FILTERS)
@@ -58,6 +72,14 @@ export function PaymentsView({ payments, pixKey }: PaymentsViewProps) {
     if (isStatusFilter(value)) setStatusFilter(value);
   }
 
+  function handleChargePayment(payment: Payment) {
+    setChargeTarget(toChargeTarget(payment));
+  }
+
+  function handleChargeOpenChange(isOpen: boolean) {
+    if (!isOpen) setChargeTarget(null);
+  }
+
   function handleRegisterOpenChange(isOpen: boolean) {
     if (!isOpen) setPaymentToRegister(null);
   }
@@ -66,8 +88,8 @@ export function PaymentsView({ payments, pixKey }: PaymentsViewProps) {
     <>
       <PaymentsTable
         payments={filteredPayments}
-        pixKey={pixKey}
         onRegisterPayment={setPaymentToRegister}
+        onChargePayment={handleChargePayment}
         toolbarActions={
           <Tabs value={statusFilter} onValueChange={handleStatusFilterChange}>
             <TabsList className="h-10">
@@ -96,6 +118,11 @@ export function PaymentsView({ payments, pixKey }: PaymentsViewProps) {
       <RegisterPaymentDialog
         target={paymentToRegister}
         onOpenChange={handleRegisterOpenChange}
+      />
+      <ChargeDialog
+        target={chargeTarget}
+        pixKey={pixKey}
+        onOpenChange={handleChargeOpenChange}
       />
     </>
   );

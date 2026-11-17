@@ -10,6 +10,7 @@ import type { FormFieldProps } from "./form-field-types";
 
 const TEXTAREA_SIZE_CLASS_NAMES = {
   default: "min-h-20",
+  medium: "min-h-60 leading-relaxed",
   large: "min-h-96 leading-relaxed",
 } as const;
 
