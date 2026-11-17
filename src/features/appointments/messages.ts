@@ -1,0 +1,8 @@
+export const APPOINTMENT_ACTION_MESSAGES = {
+  notFound: "Essa sessão não existe mais. Atualize a tela.",
+  invalidTransition: "Essa sessão mudou de situação. Atualize a tela.",
+  pastDate: "Escolha um horário que ainda não passou.",
+  conflict: "Já existe uma sessão nesse horário.",
+  unavailable: "Esse horário está fora do seu horário de atendimento.",
+  noBookableSession: "Nenhuma data livre nesse período. Escolha outro horário.",
+} as const;

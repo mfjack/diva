@@ -1,6 +1,6 @@
 const HOUR_IN_MS = 60 * 60 * 1000;
 
-export function getHoursUntil(startsAt: string, now = Date.now()): number {
+function getHoursUntil(startsAt: string, now = Date.now()): number {
   return (new Date(startsAt).getTime() - now) / HOUR_IN_MS;
 }
 

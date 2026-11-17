@@ -3,11 +3,11 @@ import { APPOINTMENT_STATUS_LABELS } from "../labels";
 import type { AppointmentStatus } from "../types";
 
 const APPOINTMENT_STATUS_TONES = {
-  scheduled: "info",
-  confirmed: "success",
-  completed: "neutral",
+  scheduled: "warning",
+  confirmed: "info",
+  completed: "success",
   cancelled: "destructive",
-  no_show: "warning",
+  no_show: "destructive",
 } as const satisfies Record<AppointmentStatus, StatusTone>;
 
 type AppointmentStatusBadgeProps = {

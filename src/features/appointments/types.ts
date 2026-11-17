@@ -6,6 +6,8 @@ import type { Enums } from "@/lib/supabase/database.types";
 
 export type AppointmentId = Brand<string, "AppointmentId">;
 
+export type AppointmentSeriesId = Brand<string, "AppointmentSeriesId">;
+
 export type AppointmentStatus = Enums<"appointment_status">;
 
 export type AppointmentModality = Enums<"appointment_modality">;
@@ -23,6 +25,7 @@ export type Appointment = {
   id: AppointmentId;
   patientId: PatientId;
   patientName: string;
+  seriesId: AppointmentSeriesId | null;
   startsAt: string;
   endsAt: string;
   modality: AppointmentModality;

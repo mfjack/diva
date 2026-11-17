@@ -16,32 +16,39 @@ function getWeekHref(weekOffset: number): string {
 export function WeekNavigator({ weekOffset }: WeekNavigatorProps) {
   return (
     <nav aria-label="Navegar entre semanas" className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="icon"
-        aria-label="Semana anterior"
-        nativeButton={false}
-        render={<Link href={getWeekHref(weekOffset - 1)} />}
-      >
-        <ChevronLeft aria-hidden />
-      </Button>
-      <Button
-        variant="outline"
-        disabled={weekOffset === 0}
-        nativeButton={false}
-        render={<Link href={getWeekHref(0)} />}
-      >
-        Esta semana
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        aria-label="Próxima semana"
-        nativeButton={false}
-        render={<Link href={getWeekHref(weekOffset + 1)} />}
-      >
-        <ChevronRight aria-hidden />
-      </Button>
+      {weekOffset !== 0 && (
+        <Button
+          variant="ghost"
+          size="lg"
+          nativeButton={false}
+          render={<Link href={getWeekHref(0)} />}
+        >
+          Hoje
+        </Button>
+      )}
+      <div className="flex items-center rounded-lg border bg-card">
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          aria-label="Semana anterior"
+          nativeButton={false}
+          render={<Link href={getWeekHref(weekOffset - 1)} />}
+          className="rounded-r-none"
+        >
+          <ChevronLeft aria-hidden />
+        </Button>
+        <span aria-hidden className="h-5 w-px bg-border" />
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          aria-label="Próxima semana"
+          nativeButton={false}
+          render={<Link href={getWeekHref(weekOffset + 1)} />}
+          className="rounded-l-none"
+        >
+          <ChevronRight aria-hidden />
+        </Button>
+      </div>
     </nav>
   );
 }

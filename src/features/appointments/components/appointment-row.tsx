@@ -39,7 +39,7 @@ export function AppointmentRow({
   action,
 }: AppointmentRowProps) {
   return (
-    <div className="flex items-center gap-4 py-3.5">
+    <div className="flex items-center gap-4 py-3 text-sm">
       <div className="flex w-14 shrink-0 flex-col">
         {leading ?? (
           <span className="font-semibold tabular-nums">

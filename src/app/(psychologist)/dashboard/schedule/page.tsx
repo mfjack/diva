@@ -1,25 +1,31 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import type { Metadata } from "next";
 import { PageContent } from "@/components/layout/page-content";
 import { PageHeader } from "@/components/layout/page-header";
-import { listAppointmentsBetween } from "@/features/appointments/queries";
+import {
+  listAppointmentsBetween,
+  listAwaitingConfirmation,
+} from "@/features/appointments/queries";
+import { listLatestSessionNotes } from "@/features/clinical-records/queries";
 import { listPatients } from "@/features/patients/queries";
-import { getPracticeSettings } from "@/features/practice-settings/queries";
-import { zonedDateTime } from "@/lib/dates";
+import {
+  getPracticeSettings,
+  listAvailabilityRules,
+} from "@/features/practice-settings/queries";
 import { getWeekDateKeys, parseWeekOffset } from "@/lib/week";
-import { ScheduleView } from "./components/schedule-view";
+import { NewAppointmentButton } from "./components/new-appointment-button";
+import { ScheduleBoard } from "./components/schedule-board";
 import { WeekNavigator } from "./components/week-navigator";
+import {
+  formatWeekRange,
+  getHourRange,
+  getVisibleDateKeys,
+  getWeekLabel,
+  mergeAppointments,
+} from "./schedule-layout";
 
 export const metadata: Metadata = {
   title: "Agenda",
 };
-
-function formatWeekRange(firstDateKey: string, lastDateKey: string): string {
-  const firstDay = zonedDateTime(firstDateKey, "12:00");
-  const lastDay = zonedDateTime(lastDateKey, "12:00");
-  return `${format(firstDay, "d 'de' MMM", { locale: ptBR })} a ${format(lastDay, "d 'de' MMM", { locale: ptBR })}`;
-}
 
 export default async function SchedulePage({
   searchParams,
@@ -30,28 +36,65 @@ export default async function SchedulePage({
   const firstDateKey = weekDateKeys[0] ?? "";
   const lastDateKey = weekDateKeys.at(-1) ?? "";
 
-  const [appointments, patients, settings] = await Promise.all([
+  const [
+    weekAppointments,
+    awaitingConfirmation,
+    patients,
+    settings,
+    rules,
+    latestSessionNotes,
+  ] = await Promise.all([
     listAppointmentsBetween(firstDateKey, lastDateKey),
+    listAwaitingConfirmation(),
     listPatients(),
     getPracticeSettings(),
+    listAvailabilityRules(),
+    listLatestSessionNotes(),
   ]);
 
+  const availability = {
+    rules,
+    sessionDurationMinutes: settings.sessionDurationMinutes,
+  };
+
   return (
-    <>
+    <div className="flex flex-1 flex-col lg:h-svh lg:flex-none lg:overflow-hidden">
       <PageHeader
         title="Agenda"
-        description={formatWeekRange(firstDateKey, lastDateKey)}
-        actions={<WeekNavigator weekOffset={weekOffset} />}
+        description={
+          <>
+            <span className="font-medium text-foreground">
+              {getWeekLabel(weekOffset)}
+            </span>{" "}
+            · {formatWeekRange(firstDateKey, lastDateKey)}
+          </>
+        }
+        actions={
+          <>
+            <WeekNavigator weekOffset={weekOffset} />
+            <NewAppointmentButton
+              patients={patients}
+              availability={availability}
+            />
+          </>
+        }
       />
-      <PageContent>
-        <ScheduleView
-          key={weekOffset}
-          weekDateKeys={weekDateKeys}
-          initialAppointments={appointments}
+      <PageContent className="lg:min-h-0 lg:pb-6">
+        <ScheduleBoard
+          appointments={mergeAppointments(
+            weekAppointments,
+            awaitingConfirmation,
+          )}
           patients={patients}
+          dateKeys={getVisibleDateKeys(weekDateKeys, rules, weekAppointments)}
+          hourRange={getHourRange(rules, weekAppointments)}
+          now={new Date().toISOString()}
           cancellationNoticeHours={settings.cancellationNoticeHours}
+          pixKey={settings.pixKey}
+          availability={availability}
+          latestSessionNotes={latestSessionNotes}
         />
       </PageContent>
-    </>
+    </div>
   );
 }

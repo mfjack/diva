@@ -5,52 +5,46 @@ import { TriangleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/dialog/form-dialog";
+import { RadioGroupField } from "@/components/form/radio-group-field";
 import { SelectField } from "@/components/form/select-field";
 import { TextareaField } from "@/components/form/textarea-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { formatCurrency, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { isLateCancellation } from "../cancellation-policy";
 import { useCancelAppointmentMutation } from "../hooks/use-cancel-appointment-mutation";
-import { CANCELLATION_REASONS } from "../labels";
+import { CANCELLATION_REASONS, CANCELLATION_SCOPE_OPTIONS } from "../labels";
 import {
   type CancelAppointmentInput,
   cancelAppointmentSchema,
 } from "../schemas";
-import type { Appointment, CancellationActor } from "../types";
-
-export type CancelledAppointmentDetails = {
-  reason: string;
-  isLateCancellation: boolean;
-};
+import type { Appointment } from "../types";
 
 type CancelAppointmentDialogProps = {
   appointment: Pick<
     Appointment,
-    "id" | "startsAt" | "patientName" | "priceCents"
+    "id" | "startsAt" | "patientName" | "seriesId"
   > | null;
-  actor: CancellationActor;
+  patientPhone: string | null;
   cancellationNoticeHours: number;
   onOpenChange: (isOpen: boolean) => void;
-  onCancelled: (details: CancelledAppointmentDetails) => void;
 };
 
 export function CancelAppointmentDialog({
   appointment,
-  actor,
+  patientPhone,
   cancellationNoticeHours,
   onOpenChange,
-  onCancelled,
 }: CancelAppointmentDialogProps) {
   const cancelAppointmentMutation = useCancelAppointmentMutation();
   const form = useForm<CancelAppointmentInput>({
     resolver: zodResolver(cancelAppointmentSchema),
-    defaultValues: { details: "" },
+    defaultValues: { scope: "single", details: "" },
   });
 
   const isLate =
     appointment !== null &&
     isLateCancellation(appointment.startsAt, cancellationNoticeHours);
-  const isPatient = actor === "patient";
 
   function handleOpenChange(isOpen: boolean) {
     if (!isOpen) form.reset();
@@ -62,9 +56,19 @@ export function CancelAppointmentDialog({
     cancelAppointmentMutation.mutate(
       { appointmentId: appointment.id, input },
       {
-        onSuccess: ({ reason }) => {
-          toast.success("Sessão cancelada.");
-          onCancelled({ reason, isLateCancellation: isLate });
+        onSuccess: ({ cancelledCount }) => {
+          toast.success(
+            cancelledCount === 1
+              ? "Sessão cancelada."
+              : `${cancelledCount} sessões canceladas.`,
+          );
+          if (patientPhone) {
+            window.open(
+              getWhatsAppUrl(patientPhone, input.details),
+              "_blank",
+              "noopener,noreferrer",
+            );
+          }
           handleOpenChange(false);
         },
         onError: (error) => toast.error(error.message),
@@ -79,7 +83,7 @@ export function CancelAppointmentDialog({
       title="Cancelar sessão"
       description={
         appointment
-          ? `${isPatient ? "Sua sessão" : `Sessão de ${appointment.patientName}`} em ${formatDateTime(appointment.startsAt)}.`
+          ? `Sessão de ${appointment.patientName} em ${formatDateTime(appointment.startsAt)}.`
           : undefined
       }
       submitLabel="Cancelar sessão"
@@ -91,11 +95,17 @@ export function CancelAppointmentDialog({
           <Alert>
             <TriangleAlert aria-hidden />
             <AlertDescription>
-              {isPatient
-                ? `Faltam menos de ${cancellationNoticeHours}h para a sessão. Pela política do consultório, o valor de ${appointment ? formatCurrency(appointment.priceCents) : ""} será cobrado.`
-                : `Cancelamento com menos de ${cancellationNoticeHours}h de antecedência. Avise o paciente pelo WhatsApp.`}
+              {`Cancelamento com menos de ${cancellationNoticeHours}h de antecedência. Avise o paciente pelo WhatsApp.`}
             </AlertDescription>
           </Alert>
+        )}
+        {appointment?.seriesId && (
+          <RadioGroupField
+            control={form.control}
+            name="scope"
+            label="O que cancelar"
+            options={CANCELLATION_SCOPE_OPTIONS}
+          />
         )}
         <SelectField
           control={form.control}
@@ -107,13 +117,13 @@ export function CancelAppointmentDialog({
         <TextareaField
           control={form.control}
           name="details"
-          label="Conte o que aconteceu"
-          placeholder={
-            isPatient
-              ? "Ex.: tive um imprevisto no trabalho e não vou conseguir chegar a tempo."
-              : "Ex.: precisarei remarcar por causa de um compromisso clínico."
+          label="Mensagem para o paciente"
+          placeholder="Ex.: Oi! Precisei cancelar nossa sessão de amanhã. Vamos remarcar?"
+          description={
+            patientPhone
+              ? "Ao cancelar, o WhatsApp abre com essa mensagem pronta para enviar. Ela também fica no histórico da sessão."
+              : "O paciente não tem WhatsApp cadastrado. A mensagem fica só no histórico da sessão."
           }
-          description="Esse texto fica registrado no histórico da sessão."
         />
       </div>
     </FormDialog>
