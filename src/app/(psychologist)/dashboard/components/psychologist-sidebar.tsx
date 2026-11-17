@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LiveClock } from "@/components/live-clock";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
@@ -45,6 +46,7 @@ export function PsychologistSidebar({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="gap-3">
+        <LiveClock className="text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
         <SidebarMenu>
           <SidebarLink {...PSYCHOLOGIST_SETTINGS_ITEM} />
         </SidebarMenu>

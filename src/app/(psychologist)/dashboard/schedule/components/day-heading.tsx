@@ -22,24 +22,22 @@ export function DayHeading({ dateKey, isToday }: DayHeadingProps) {
   const holiday = getHoliday(dateKey);
 
   return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground text-xs uppercase tracking-wide">
-          {format(day, "EEEEEE", { locale: ptBR })}
-        </span>
-        <span
-          className={cn(
-            "flex size-7 items-center justify-center rounded-full font-semibold text-sm",
-            isToday && "bg-primary text-primary-foreground",
-          )}
-        >
-          {format(day, "d")}
-        </span>
-      </div>
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="text-muted-foreground text-xs uppercase tracking-wide">
+        {format(day, "EEEEEE", { locale: ptBR })}
+      </span>
+      <span
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-full font-semibold text-sm",
+          isToday && "bg-primary text-primary-foreground",
+        )}
+      >
+        {format(day, "d")}
+      </span>
       {holiday && (
         <span
-          title={holiday.isOptional ? "Ponto facultativo" : "Feriado nacional"}
-          className="truncate text-[0.625rem] text-warning leading-tight"
+          title={`${holiday.name} · ${holiday.isOptional ? "Ponto facultativo" : "Feriado nacional"}`}
+          className="min-w-0 truncate text-[0.625rem] text-warning"
         >
           {holiday.name}
         </span>

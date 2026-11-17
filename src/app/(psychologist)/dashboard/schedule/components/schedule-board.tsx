@@ -15,21 +15,19 @@ import {
 } from "@/features/payments/components/register-payment-dialog";
 import type { SessionAvailability } from "@/features/practice-settings/availability";
 import { toDateKey } from "@/lib/dates";
-import { type HourRange, listPendingRequests } from "../schedule-layout";
+import { listPendingRequests } from "../schedule-layout";
 import { AppointmentDetailsSheet } from "./appointment-details-sheet";
-import { DayList } from "./day-list";
 import { PendingRequests } from "./pending-requests";
-import { ScheduleLegend } from "./schedule-legend";
-import { WeekGrid } from "./week-grid";
+import { WeekColumns } from "./week-columns";
 
 type ScheduleBoardProps = {
   appointments: Appointment[];
   patients: Patient[];
   dateKeys: string[];
-  hourRange: HourRange;
   now: string;
   cancellationNoticeHours: number;
   pixKey: string | null;
+  practiceMeetingUrl: string | null;
   availability: SessionAvailability;
   latestSessionNotes: SessionNoteSummary[];
 };
@@ -47,10 +45,10 @@ export function ScheduleBoard({
   appointments,
   patients,
   dateKeys,
-  hourRange,
   now,
   cancellationNoticeHours,
   pixKey,
+  practiceMeetingUrl,
   availability,
   latestSessionNotes,
 }: ScheduleBoardProps) {
@@ -145,22 +143,13 @@ export function ScheduleBoard({
         aria-label="Semana"
         className="flex min-w-0 flex-1 flex-col gap-4 lg:min-h-0"
       >
-        <WeekGrid
-          dateKeys={dateKeys}
-          appointments={weekAppointments}
-          hourRange={hourRange}
-          now={now}
-          onSelect={handleSelect}
-          className="hidden lg:flex lg:min-h-0 lg:flex-1"
-        />
-        <DayList
+        <WeekColumns
           dateKeys={dateKeys}
           appointments={weekAppointments}
           now={now}
           onSelect={handleSelect}
-          className="lg:hidden"
+          className="lg:min-h-0 lg:flex-1 lg:content-start lg:overflow-y-auto"
         />
-        <ScheduleLegend />
       </section>
 
       {pendingRequests.length > 0 && (
@@ -178,6 +167,7 @@ export function ScheduleBoard({
         patient={selectedPatient}
         latestSessionNote={selectedSessionNote}
         pixKey={pixKey}
+        practiceMeetingUrl={practiceMeetingUrl}
         now={now}
         onOpenChange={handleDetailsOpenChange}
         onCancelRequest={handleCancelRequest}

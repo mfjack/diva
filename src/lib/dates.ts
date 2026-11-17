@@ -41,12 +41,6 @@ export function isSameDateKey(date: Date | string, dateKey: string): boolean {
   return toDateKey(date) === dateKey;
 }
 
-export function minutesBetween(start: Date | string, end: Date | string) {
-  return Math.round(
-    (new Date(end).getTime() - new Date(start).getTime()) / 60_000,
-  );
-}
-
 const LOCAL_DATE_KEY_FORMAT = "yyyy-MM-dd";
 
 export function dateKeyToLocalDate(dateKey: string): Date {

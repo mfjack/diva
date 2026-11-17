@@ -18,7 +18,6 @@ import { ScheduleBoard } from "./components/schedule-board";
 import { WeekNavigator } from "./components/week-navigator";
 import {
   formatWeekRange,
-  getHourRange,
   getVisibleDateKeys,
   getWeekLabel,
   mergeAppointments,
@@ -53,6 +52,11 @@ export default async function SchedulePage({
     listLatestSessionNotes(),
   ]);
 
+  const visibleDateKeys = getVisibleDateKeys(
+    weekDateKeys,
+    rules,
+    weekAppointments,
+  );
   const availability = {
     rules,
     sessionDurationMinutes: settings.sessionDurationMinutes,
@@ -78,7 +82,11 @@ export default async function SchedulePage({
             <span className="font-medium text-foreground">
               {getWeekLabel(weekOffset)}
             </span>{" "}
-            · {formatWeekRange(firstDateKey, lastDateKey)}
+            ·{" "}
+            {formatWeekRange(
+              visibleDateKeys[0] ?? firstDateKey,
+              visibleDateKeys.at(-1) ?? lastDateKey,
+            )}
           </>
         }
         actions={
@@ -98,11 +106,11 @@ export default async function SchedulePage({
             awaitingConfirmation,
           )}
           patients={patients}
-          dateKeys={getVisibleDateKeys(weekDateKeys, rules, weekAppointments)}
-          hourRange={getHourRange(rules, weekAppointments)}
+          dateKeys={visibleDateKeys}
           now={new Date().toISOString()}
           cancellationNoticeHours={settings.cancellationNoticeHours}
           pixKey={settings.pixKey}
+          practiceMeetingUrl={settings.meetingUrl}
           availability={availability}
           latestSessionNotes={latestSessionNotes}
         />

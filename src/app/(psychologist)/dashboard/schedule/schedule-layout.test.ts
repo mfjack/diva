@@ -3,13 +3,8 @@ import type { Appointment } from "@/features/appointments/types";
 import { zonedDateTime } from "@/lib/dates";
 import {
   formatWeekRange,
-  getBlockPosition,
-  getHourRange,
-  getHoursOfRange,
-  getNowLineTopRem,
   getVisibleDateKeys,
   getWeekLabel,
-  HOUR_HEIGHT_REM,
   listPendingRequests,
   mergeAppointments,
 } from "./schedule-layout";
@@ -45,54 +40,6 @@ describe("getVisibleDateKeys", () => {
       [{ startsAt: at(SATURDAY, "10:00") }],
     );
     expect(visibleDateKeys).toEqual([MONDAY, SATURDAY]);
-  });
-});
-
-describe("getHourRange", () => {
-  it("covers availability and sessions", () => {
-    const range = getHourRange(
-      [{ startTime: "09:00", endTime: "12:30" }],
-      [{ startsAt: at(MONDAY, "07:30"), endsAt: at(MONDAY, "08:20") }],
-    );
-    expect(range).toEqual({ firstHour: 7, lastHour: 13 });
-    expect(getHoursOfRange(range)).toEqual([7, 8, 9, 10, 11, 12]);
-  });
-
-  it("falls back to business hours", () => {
-    expect(getHourRange([], [])).toEqual({ firstHour: 8, lastHour: 18 });
-  });
-});
-
-describe("getBlockPosition", () => {
-  it("fills the hour slot of a 50 minute session with a small inset", () => {
-    const position = getBlockPosition(
-      at(MONDAY, "10:00"),
-      at(MONDAY, "10:50"),
-      8,
-    );
-    expect(position.topRem).toBeCloseTo(2 * HOUR_HEIGHT_REM + 0.25);
-    expect(position.heightRem).toBeCloseTo(HOUR_HEIGHT_REM - 0.5);
-  });
-
-  it("snaps short sessions to half an hour", () => {
-    const position = getBlockPosition(
-      at(MONDAY, "10:00"),
-      at(MONDAY, "10:20"),
-      8,
-    );
-    expect(position.heightRem).toBeCloseTo(HOUR_HEIGHT_REM / 2 - 0.5);
-  });
-});
-
-describe("getNowLineTopRem", () => {
-  const range = { firstHour: 8, lastHour: 18 };
-
-  it("returns the offset only for today within the range", () => {
-    expect(getNowLineTopRem(at(MONDAY, "09:30"), MONDAY, range)).toBe(
-      1.5 * HOUR_HEIGHT_REM,
-    );
-    expect(getNowLineTopRem(at(MONDAY, "09:30"), SATURDAY, range)).toBeNull();
-    expect(getNowLineTopRem(at(MONDAY, "21:00"), MONDAY, range)).toBeNull();
   });
 });
 
