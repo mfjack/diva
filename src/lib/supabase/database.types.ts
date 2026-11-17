@@ -768,6 +768,7 @@ export type Database = {
           bio: string | null
           booking_window_days: number
           cancellation_notice_hours: number
+          cpf: string | null
           created_at: string
           default_session_price_cents: number
           meeting_url: string | null
@@ -783,6 +784,7 @@ export type Database = {
           bio?: string | null
           booking_window_days: number
           cancellation_notice_hours: number
+          cpf?: string | null
           created_at?: string
           default_session_price_cents: number
           meeting_url?: string | null
@@ -798,6 +800,7 @@ export type Database = {
           bio?: string | null
           booking_window_days?: number
           cancellation_notice_hours?: number
+          cpf?: string | null
           created_at?: string
           default_session_price_cents?: number
           meeting_url?: string | null
