@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/dialog/form-dialog";
 import { DateField } from "@/components/form/date-field";
@@ -11,6 +11,11 @@ import { SelectField } from "@/components/form/select-field";
 import { TextField } from "@/components/form/text-field";
 import { TextareaField } from "@/components/form/textarea-field";
 import { APPOINTMENT_MODALITY_OPTIONS } from "@/features/appointments/labels";
+import { MAX_BILLING_DAY, MIN_BILLING_DAY } from "@/features/payments/due-date";
+import {
+  PAYMENT_PLAN_DESCRIPTIONS,
+  PAYMENT_PLAN_OPTIONS,
+} from "@/features/payments/labels";
 import { useSavePatientMutation } from "../hooks/use-save-patient-mutation";
 import {
   EMPTY_PATIENT_INPUT,
@@ -37,6 +42,7 @@ export function PatientFormDialog({
     resolver: zodResolver(patientSchema),
     defaultValues,
   });
+  const paymentPlan = useWatch({ control: form.control, name: "paymentPlan" });
 
   function handleOpenChange(nextIsOpen: boolean) {
     if (!nextIsOpen) form.reset(EMPTY_PATIENT_INPUT);
@@ -112,7 +118,7 @@ export function PatientFormDialog({
         </fieldset>
 
         <fieldset className="grid gap-4 sm:grid-cols-2">
-          <legend className="mb-3 font-medium text-sm">Atendimento</legend>
+          <legend className="mb-3 font-medium text-sm">Pagamento</legend>
           <NumberField
             control={form.control}
             name="sessionPrice"
@@ -123,18 +129,46 @@ export function PatientFormDialog({
           />
           <SelectField
             control={form.control}
-            name="preferredModality"
-            label="Modalidade de atendimento"
-            placeholder="Presencial ou online"
-            options={APPOINTMENT_MODALITY_OPTIONS}
-            description="Usada automaticamente ao agendar as sessões."
+            name="paymentPlan"
+            label="Como paga"
+            placeholder="Por sessão ou mensal"
+            options={PAYMENT_PLAN_OPTIONS}
+            description={
+              paymentPlan
+                ? PAYMENT_PLAN_DESCRIPTIONS[paymentPlan]
+                : "Define quando cada pagamento vence."
+            }
           />
+          {paymentPlan === "monthly" && (
+            <NumberField
+              control={form.control}
+              name="billingDay"
+              label="Dia do pagamento"
+              format="integer"
+              placeholder={`Entre ${MIN_BILLING_DAY} e ${MAX_BILLING_DAY}`}
+              description="Depois desse dia, as sessões do mês ficam em atraso."
+            />
+          )}
           <TextField
             control={form.control}
             name="healthInsurance"
             label="Plano de saúde"
             placeholder="Ex.: SulAmérica (reembolso)"
           />
+        </fieldset>
+
+        <fieldset className="grid gap-4 sm:grid-cols-2">
+          <legend className="mb-3 font-medium text-sm">Atendimento</legend>
+          <div className="sm:col-span-2">
+            <SelectField
+              control={form.control}
+              name="preferredModality"
+              label="Modalidade de atendimento"
+              placeholder="Presencial ou online"
+              options={APPOINTMENT_MODALITY_OPTIONS}
+              description="Usada automaticamente ao agendar as sessões."
+            />
+          </div>
           <TextField
             control={form.control}
             name="emergencyContactName"

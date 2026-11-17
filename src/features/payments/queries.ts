@@ -5,7 +5,7 @@ import { toDateKey } from "@/lib/dates";
 import type { Cents } from "@/lib/money";
 import { isDateKeyInRange, type MonthRange } from "@/lib/months";
 import { listMockPayments } from "@/mocks/payments";
-import { isOverdue } from "./overdue";
+import { getTodayDateKey, isOverdue, isPaymentDue } from "./overdue";
 import { buildMonthlyRevenue } from "./revenue";
 import type { MonthlyRevenue, Payment } from "./types";
 
@@ -23,14 +23,15 @@ function sumAmounts(payments: readonly Payment[]): Cents {
   ) as Cents;
 }
 
-function isChargeable(payment: Payment, now: string): boolean {
-  return payment.status !== "pending" || payment.sessionStartsAt <= now;
+function isChargeable(payment: Payment, today: string): boolean {
+  if (payment.status === "waived") return false;
+  return payment.status !== "pending" || isPaymentDue(payment, today);
 }
 
 function listChargeablePayments(): Payment[] {
-  const now = new Date().toISOString();
+  const today = getTodayDateKey();
   return listMockPayments()
-    .filter((payment) => isChargeable(payment, now))
+    .filter((payment) => isChargeable(payment, today))
     .sort((first, second) =>
       second.sessionStartsAt.localeCompare(first.sessionStartsAt),
     );

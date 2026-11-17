@@ -27,7 +27,10 @@ import {
   insertMockPatient,
   updateMockPatient,
 } from "@/mocks/patients";
-import { waiveMockPayment } from "@/mocks/payments";
+import {
+  updateMockPendingPaymentDueDates,
+  waiveMockPayment,
+} from "@/mocks/payments";
 import type { StoredPatient } from "@/mocks/store";
 import { PATIENT_ACTION_MESSAGES } from "./messages";
 import { type PatientInput, patientSchema } from "./schemas";
@@ -55,6 +58,9 @@ function toPatientFields(
     healthInsurance: emptyToNull(input.healthInsurance),
     emergencyContactName: emptyToNull(input.emergencyContactName),
     emergencyContactPhone: emptyToNull(input.emergencyContactPhone),
+    paymentPlan: input.paymentPlan,
+    billingDay:
+      input.paymentPlan === "monthly" ? (input.billingDay ?? null) : null,
     notes: emptyToNull(input.notes),
   };
 }
@@ -77,6 +83,7 @@ export async function savePatient(
       return actionFailure(PATIENT_ACTION_MESSAGES.notFound);
     }
     updateMockPatient(patientId, fields);
+    updateMockPendingPaymentDueDates(patientId, fields);
     revalidatePath(ROUTES.psychologist.dashboard, "layout");
     return actionSuccess({ id: patientId });
   }

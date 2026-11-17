@@ -1,4 +1,5 @@
 import type { AppointmentModality } from "@/features/appointments/types";
+import type { PaymentTerms } from "@/features/payments/types";
 import type { Brand } from "@/lib/brand";
 import type { Cents } from "@/lib/money";
 import type { Enums } from "@/lib/supabase/database.types";
@@ -7,7 +8,7 @@ export type PatientId = Brand<string, "PatientId">;
 
 export type PatientStatus = Enums<"patient_status">;
 
-export type Patient = {
+export type Patient = PaymentTerms & {
   id: PatientId;
   fullName: string;
   email: string | null;

@@ -535,6 +535,7 @@ export type Database = {
       }
       patients: {
         Row: {
+          billing_day: number | null
           birth_date: string | null
           cpf: string | null
           created_at: string
@@ -546,6 +547,7 @@ export type Database = {
           health_insurance: string | null
           id: string
           notes: string | null
+          payment_plan: Database["public"]["Enums"]["payment_plan"]
           phone: string | null
           preferred_modality: Database["public"]["Enums"]["appointment_modality"]
           psychologist_id: string
@@ -555,6 +557,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          billing_day?: number | null
           birth_date?: string | null
           cpf?: string | null
           created_at?: string
@@ -566,6 +569,7 @@ export type Database = {
           health_insurance?: string | null
           id?: string
           notes?: string | null
+          payment_plan?: Database["public"]["Enums"]["payment_plan"]
           phone?: string | null
           preferred_modality?: Database["public"]["Enums"]["appointment_modality"]
           psychologist_id: string
@@ -575,6 +579,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          billing_day?: number | null
           birth_date?: string | null
           cpf?: string | null
           created_at?: string
@@ -586,6 +591,7 @@ export type Database = {
           health_insurance?: string | null
           id?: string
           notes?: string | null
+          payment_plan?: Database["public"]["Enums"]["payment_plan"]
           phone?: string | null
           preferred_modality?: Database["public"]["Enums"]["appointment_modality"]
           psychologist_id?: string
@@ -736,6 +742,7 @@ export type Database = {
           cancellation_notice_hours: number
           created_at: string
           default_session_price_cents: number
+          meeting_url: string | null
           minimum_booking_notice_hours: number
           office_address: string | null
           pix_key: string | null
@@ -750,6 +757,7 @@ export type Database = {
           cancellation_notice_hours: number
           created_at?: string
           default_session_price_cents: number
+          meeting_url?: string | null
           minimum_booking_notice_hours?: number
           office_address?: string | null
           pix_key?: string | null
@@ -764,6 +772,7 @@ export type Database = {
           cancellation_notice_hours?: number
           created_at?: string
           default_session_price_cents?: number
+          meeting_url?: string | null
           minimum_booking_notice_hours?: number
           office_address?: string | null
           pix_key?: string | null
@@ -882,6 +891,7 @@ export type Database = {
         | "credit_card"
         | "debit_card"
         | "bank_transfer"
+      payment_plan: "per_session" | "monthly"
       payment_status: "pending" | "paid" | "waived" | "refunded"
       session_repeat: "weekly" | "biweekly"
       study_note_kind:
@@ -1054,6 +1064,7 @@ export const Constants = {
         "debit_card",
         "bank_transfer",
       ],
+      payment_plan: ["per_session", "monthly"],
       payment_status: ["pending", "paid", "waived", "refunded"],
       session_repeat: ["weekly", "biweekly"],
       study_note_kind: [

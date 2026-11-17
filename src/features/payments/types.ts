@@ -10,6 +10,13 @@ export type PaymentStatus = Enums<"payment_status">;
 
 export type PaymentMethod = Enums<"payment_method">;
 
+export type PaymentPlan = Enums<"payment_plan">;
+
+export type PaymentTerms = {
+  paymentPlan: PaymentPlan;
+  billingDay: number | null;
+};
+
 export type Payment = {
   id: PaymentId;
   appointmentId: AppointmentId;

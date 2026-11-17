@@ -1,10 +1,15 @@
-import type { PaymentMethod, PaymentStatus } from "./types";
+import type {
+  PaymentMethod,
+  PaymentPlan,
+  PaymentStatus,
+  PaymentTerms,
+} from "./types";
 
 export const PAYMENT_STATUS_LABELS = {
-  pending: "Pendente",
-  paid: "Pago",
-  waived: "Isento",
-  refunded: "Estornado",
+  pending: "Pagamento pendente",
+  paid: "Pagamento realizado",
+  waived: "Sem cobrança",
+  refunded: "Pagamento estornado",
 } as const satisfies Record<PaymentStatus, string>;
 
 export const PAYMENT_METHOD_LABELS = {
@@ -18,3 +23,28 @@ export const PAYMENT_METHOD_LABELS = {
 export const PAYMENT_METHOD_OPTIONS = Object.entries(PAYMENT_METHOD_LABELS).map(
   ([value, label]) => ({ value, label }),
 );
+
+export const PAYMENT_PLAN_LABELS = {
+  per_session: "Por sessão",
+  monthly: "Mensal",
+} as const satisfies Record<PaymentPlan, string>;
+
+export const PAYMENT_PLAN_DESCRIPTIONS = {
+  per_session: "Paga no dia de cada sessão. Depois do horário, fica em atraso.",
+  monthly:
+    "Paga as sessões do mês até o dia escolhido. Depois dele, fica em atraso.",
+} as const satisfies Record<PaymentPlan, string>;
+
+export const PAYMENT_PLAN_OPTIONS = Object.entries(PAYMENT_PLAN_LABELS).map(
+  ([value, label]) => ({ value, label }),
+);
+
+export function describePaymentTerms({
+  paymentPlan,
+  billingDay,
+}: PaymentTerms): string {
+  const label = PAYMENT_PLAN_LABELS[paymentPlan];
+  return paymentPlan === "monthly" && billingDay
+    ? `${label}, até o dia ${billingDay}`
+    : label;
+}

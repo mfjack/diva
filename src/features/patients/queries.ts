@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Appointment } from "@/features/appointments/types";
+import { getTodayDateKey, isPaymentDue } from "@/features/payments/overdue";
 import type { Payment } from "@/features/payments/types";
 import type { Cents } from "@/lib/money";
 import { listMockAppointments } from "@/mocks/appointments";
@@ -28,12 +29,11 @@ function toPatient(
       ({ status, startsAt }) => UPCOMING_STATUSES.has(status) && startsAt > now,
     )
     .sort((first, second) => first.startsAt.localeCompare(second.startsAt))[0];
+  const today = getTodayDateKey(new Date(now));
   const pendingAmountCents = payments
     .filter(
-      ({ patientId, status, sessionStartsAt }) =>
-        patientId === patient.id &&
-        status === "pending" &&
-        sessionStartsAt <= now,
+      (payment) =>
+        payment.patientId === patient.id && isPaymentDue(payment, today),
     )
     .reduce((total, { amountCents }) => total + amountCents, 0) as Cents;
 

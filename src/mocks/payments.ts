@@ -1,11 +1,13 @@
 import "server-only";
 
 import type { Appointment } from "@/features/appointments/types";
+import { getPaymentDueDate } from "@/features/payments/due-date";
 import type {
   Payment,
   PaymentId,
   PaymentMethod,
   PaymentStatus,
+  PaymentTerms,
 } from "@/features/payments/types";
 import { toDateKey } from "@/lib/dates";
 import { findMockAppointment } from "./appointments";
@@ -35,6 +37,18 @@ function setAppointmentPaymentStatus(
   if (appointment) appointment.paymentStatus = status;
 }
 
+const DEFAULT_PAYMENT_TERMS: PaymentTerms = {
+  paymentPlan: "per_session",
+  billingDay: null,
+};
+
+function getDueDate(patientId: string, sessionStartsAt: string): string {
+  return getPaymentDueDate(
+    findMockPatient(patientId) ?? DEFAULT_PAYMENT_TERMS,
+    toDateKey(sessionStartsAt),
+  );
+}
+
 export function insertMockPayment(appointment: Appointment): void {
   getMockDatabase().payments.push({
     id: crypto.randomUUID() as PaymentId,
@@ -46,7 +60,7 @@ export function insertMockPayment(appointment: Appointment): void {
     amountCents: appointment.priceCents,
     status: "pending",
     method: null,
-    dueDate: toDateKey(appointment.startsAt),
+    dueDate: getDueDate(appointment.patientId, appointment.startsAt),
     paidAt: null,
     receiptNumber: null,
   });
@@ -59,16 +73,31 @@ export function registerMockPayment(
 ): void {
   const payment = findPaymentOfAppointment(appointmentId);
   if (!payment) return;
-  const paidCount = listMockPayments().filter(
-    ({ status }) => status === "paid",
-  ).length;
+  const lastReceiptNumber = Math.max(
+    0,
+    ...listMockPayments().map(({ receiptNumber }) => receiptNumber ?? 0),
+  );
   Object.assign(payment, {
     status: "paid",
     method,
     paidAt,
-    receiptNumber: paidCount + 1,
+    receiptNumber: lastReceiptNumber + 1,
   } satisfies Partial<Payment>);
   setAppointmentPaymentStatus(appointmentId, "paid");
+  saveMockDatabase();
+}
+
+export function undoMockPayment(appointmentId: string): void {
+  const payment = findPaymentOfAppointment(appointmentId);
+  if (payment?.status !== "paid") return;
+  Object.assign(payment, {
+    status: "pending",
+    method: null,
+    paidAt: null,
+    receiptNumber: null,
+    dueDate: getDueDate(payment.patientId, payment.sessionStartsAt),
+  } satisfies Partial<Payment>);
+  setAppointmentPaymentStatus(appointmentId, "pending");
   saveMockDatabase();
 }
 
@@ -86,6 +115,22 @@ export function updateMockPaymentSession(
   const payment = findPaymentOfAppointment(appointmentId);
   if (!payment) return;
   payment.sessionStartsAt = sessionStartsAt;
-  payment.dueDate = toDateKey(sessionStartsAt);
+  payment.dueDate = getDueDate(payment.patientId, sessionStartsAt);
+  saveMockDatabase();
+}
+
+export function updateMockPendingPaymentDueDates(
+  patientId: string,
+  terms: PaymentTerms,
+): void {
+  for (const payment of listMockPayments()) {
+    if (payment.patientId !== patientId || payment.status !== "pending") {
+      continue;
+    }
+    payment.dueDate = getPaymentDueDate(
+      terms,
+      toDateKey(payment.sessionStartsAt),
+    );
+  }
   saveMockDatabase();
 }

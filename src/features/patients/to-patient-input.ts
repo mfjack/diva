@@ -14,6 +14,8 @@ export function toPatientInput(patient: Patient): PatientInput {
     healthInsurance: patient.healthInsurance ?? "",
     emergencyContactName: patient.emergencyContactName ?? "",
     emergencyContactPhone: patient.emergencyContactPhone ?? "",
+    paymentPlan: patient.paymentPlan,
+    billingDay: patient.billingDay ?? undefined,
     notes: patient.notes ?? "",
   };
 }

@@ -12,14 +12,20 @@ const PAYMENT_STATUS_TONES = {
 type PaymentStatusBadgeProps = {
   status: PaymentStatus;
   isSessionUpcoming?: boolean;
+  isOverdue?: boolean;
 };
 
 export function PaymentStatusBadge({
   status,
   isSessionUpcoming = false,
+  isOverdue = false,
 }: PaymentStatusBadgeProps) {
+  if (status === "pending" && isOverdue) {
+    return <StatusBadge tone="destructive">Pagamento atrasado</StatusBadge>;
+  }
+
   if (status === "pending" && isSessionUpcoming) {
-    return <StatusBadge tone="neutral">A cobrar</StatusBadge>;
+    return <StatusBadge tone="neutral">Pagamento a cobrar</StatusBadge>;
   }
 
   return (
