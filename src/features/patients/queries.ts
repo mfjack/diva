@@ -1,70 +1,69 @@
 import "server-only";
 
-import type { Appointment } from "@/features/appointments/types";
-import { getTodayDateKey, isPaymentDue } from "@/features/payments/overdue";
-import type { Payment } from "@/features/payments/types";
+import { cache } from "react";
+import { z } from "zod";
+import { completeFinishedAppointments } from "@/features/appointments/finished-appointments";
+import { getCurrentUser } from "@/features/auth/queries";
+import { toDateKey } from "@/lib/dates";
 import type { Cents } from "@/lib/money";
-import { listMockAppointments } from "@/mocks/appointments";
-import { findMockPatient, listMockPatients } from "@/mocks/patients";
-import { listMockPayments } from "@/mocks/payments";
-import type { StoredPatient } from "@/mocks/store";
-import type { Patient } from "./types";
+import type { Tables } from "@/lib/supabase/database.types";
+import { assertNoDatabaseError } from "@/lib/supabase/errors";
+import { createClient } from "@/lib/supabase/server";
+import type { Patient, PatientId } from "./types";
 
-const UPCOMING_STATUSES = new Set<Appointment["status"]>([
-  "scheduled",
-  "confirmed",
-]);
+type PatientSummaryRow = Tables<"patient_summaries">;
 
-function toPatient(
-  patient: StoredPatient,
-  appointments: readonly Appointment[],
-  payments: readonly Payment[],
-  now: string,
-): Patient {
-  const patientAppointments = appointments.filter(
-    ({ patientId }) => patientId === patient.id,
-  );
-  const nextAppointment = patientAppointments
-    .filter(
-      ({ status, startsAt }) => UPCOMING_STATUSES.has(status) && startsAt > now,
-    )
-    .sort((first, second) => first.startsAt.localeCompare(second.startsAt))[0];
-  const today = getTodayDateKey(new Date(now));
-  const pendingAmountCents = payments
-    .filter(
-      (payment) =>
-        payment.patientId === patient.id && isPaymentDue(payment, today),
-    )
-    .reduce((total, { amountCents }) => total + amountCents, 0) as Cents;
+const patientIdSchema = z.uuid();
 
+function toPatient(row: PatientSummaryRow): Patient {
   return {
-    ...patient,
-    nextAppointmentAt: nextAppointment?.startsAt ?? null,
-    completedSessionCount: patientAppointments.filter(
-      ({ status }) => status === "completed",
-    ).length,
-    pendingAmountCents,
+    id: row.id as PatientId,
+    fullName: row.full_name ?? "",
+    email: row.email,
+    phone: row.phone,
+    birthDate: row.birth_date,
+    cpf: row.cpf,
+    status: row.status ?? "active",
+    sessionPriceCents: (row.session_price_cents ?? 0) as Cents,
+    preferredModality: row.preferred_modality ?? "in_person",
+    paymentPlan: row.payment_plan ?? "per_session",
+    billingDay: row.billing_day,
+    healthInsurance: row.health_insurance,
+    emergencyContactName: row.emergency_contact_name,
+    emergencyContactPhone: row.emergency_contact_phone,
+    notes: row.notes,
+    startedAt: toDateKey(row.created_at ?? new Date()),
+    nextAppointmentAt: row.next_appointment_at,
+    completedSessionCount: row.completed_session_count ?? 0,
+    pendingAmountCents: (row.pending_amount_cents ?? 0) as Cents,
   };
 }
 
-export async function listPatients(): Promise<Patient[]> {
-  const now = new Date().toISOString();
-  const appointments = listMockAppointments();
-  const payments = listMockPayments();
-  return listMockPatients()
-    .map((patient) => toPatient(patient, appointments, payments, now))
+export const listPatients = cache(async (): Promise<Patient[]> => {
+  if (!(await getCurrentUser())) return [];
+  await completeFinishedAppointments();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("patient_summaries").select("*");
+  assertNoDatabaseError(error);
+  return (data ?? [])
+    .map(toPatient)
     .sort((first, second) =>
       first.fullName.localeCompare(second.fullName, "pt-BR"),
     );
-}
+});
 
-export async function getPatient(patientId: string): Promise<Patient | null> {
-  const patient = findMockPatient(patientId);
-  if (!patient) return null;
-  return toPatient(
-    patient,
-    listMockAppointments(),
-    listMockPayments(),
-    new Date().toISOString(),
-  );
-}
+export const getPatient = cache(
+  async (patientId: string): Promise<Patient | null> => {
+    const parsedId = patientIdSchema.safeParse(patientId);
+    if (!parsedId.success || !(await getCurrentUser())) return null;
+    await completeFinishedAppointments();
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("patient_summaries")
+      .select("*")
+      .eq("id", parsedId.data)
+      .maybeSingle();
+    assertNoDatabaseError(error);
+    return data ? toPatient(data) : null;
+  },
+);

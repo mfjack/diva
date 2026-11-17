@@ -72,6 +72,13 @@ export type Database = {
             foreignKeyName: "appointment_series_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_series_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -147,6 +154,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_summaries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_patient_id_fkey"
             columns: ["patient_id"]
@@ -337,6 +351,13 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinical_records_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_summaries"
             referencedColumns: ["id"]
           },
           {
@@ -678,6 +699,13 @@ export type Database = {
             foreignKeyName: "payments_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -852,14 +880,133 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      patient_summaries: {
+        Row: {
+          billing_day: number | null
+          birth_date: string | null
+          completed_session_count: number | null
+          cpf: string | null
+          created_at: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string | null
+          health_insurance: string | null
+          id: string | null
+          next_appointment_at: string | null
+          notes: string | null
+          payment_plan: Database["public"]["Enums"]["payment_plan"] | null
+          pending_amount_cents: number | null
+          phone: string | null
+          preferred_modality:
+            | Database["public"]["Enums"]["appointment_modality"]
+            | null
+          psychologist_id: string | null
+          session_price_cents: number | null
+          status: Database["public"]["Enums"]["patient_status"] | null
+        }
+        Insert: {
+          billing_day?: number | null
+          birth_date?: string | null
+          completed_session_count?: never
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string | null
+          health_insurance?: string | null
+          id?: string | null
+          next_appointment_at?: never
+          notes?: string | null
+          payment_plan?: Database["public"]["Enums"]["payment_plan"] | null
+          pending_amount_cents?: never
+          phone?: string | null
+          preferred_modality?:
+            | Database["public"]["Enums"]["appointment_modality"]
+            | null
+          psychologist_id?: string | null
+          session_price_cents?: number | null
+          status?: Database["public"]["Enums"]["patient_status"] | null
+        }
+        Update: {
+          billing_day?: number | null
+          birth_date?: string | null
+          completed_session_count?: never
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string | null
+          health_insurance?: string | null
+          id?: string | null
+          next_appointment_at?: never
+          notes?: string | null
+          payment_plan?: Database["public"]["Enums"]["payment_plan"] | null
+          pending_amount_cents?: never
+          phone?: string | null
+          preferred_modality?:
+            | Database["public"]["Enums"]["appointment_modality"]
+            | null
+          psychologist_id?: string | null
+          session_price_cents?: number | null
+          status?: Database["public"]["Enums"]["patient_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      cancel_appointments: {
+        Args: { p_cancellations: Json; p_reason: string }
+        Returns: number
+      }
+      complete_finished_appointments: { Args: never; Returns: undefined }
+      create_appointments: {
+        Args: {
+          p_patient_id: string
+          p_repeat?: Database["public"]["Enums"]["session_repeat"]
+          p_series_ends_on?: string
+          p_series_starts_on?: string
+          p_sessions: Json
+        }
+        Returns: number
+      }
+      delete_patient: {
+        Args: { p_patient_id: string; p_reason: string }
+        Returns: undefined
+      }
       is_psychologist: { Args: never; Returns: boolean }
+      payment_due_date: {
+        Args: {
+          p_billing_day: number
+          p_payment_plan: Database["public"]["Enums"]["payment_plan"]
+          p_starts_at: string
+        }
+        Returns: string
+      }
+      register_payment: {
+        Args: {
+          p_appointment_id: string
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_notes: string
+          p_paid_at: string
+        }
+        Returns: undefined
+      }
       replace_availability_rules: {
         Args: { p_rules: Json }
         Returns: undefined
       }
+      undo_payment: { Args: { p_appointment_id: string }; Returns: undefined }
     }
     Enums: {
       appointment_modality: "in_person" | "online"

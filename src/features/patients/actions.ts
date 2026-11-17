@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { canChangeSchedule } from "@/features/appointments/status-transitions";
 import {
   INVALID_FORM_MESSAGE,
   UNAUTHORIZED_MESSAGE,
@@ -14,53 +13,59 @@ import {
   actionFailure,
   actionSuccess,
 } from "@/lib/action-result";
-import { toDateKey } from "@/lib/dates";
-import { toCents } from "@/lib/money";
+import { type Cents, toCents } from "@/lib/money";
 import { ROUTES } from "@/lib/routes";
 import { emptyToNull } from "@/lib/strings";
+import type { TablesUpdate } from "@/lib/supabase/database.types";
 import {
-  listMockAppointments,
-  updateMockAppointment,
-} from "@/mocks/appointments";
-import {
-  findMockPatient,
-  insertMockPatient,
-  updateMockPatient,
-} from "@/mocks/patients";
-import {
-  updateMockPendingPaymentDueDates,
-  waiveMockPayment,
-} from "@/mocks/payments";
-import type { StoredPatient } from "@/mocks/store";
+  DATABASE_ERROR_CODES,
+  hasDatabaseErrorCode,
+} from "@/lib/supabase/errors";
+import { createClient } from "@/lib/supabase/server";
 import { PATIENT_ACTION_MESSAGES } from "./messages";
 import { type PatientInput, patientSchema } from "./schemas";
 import type { PatientId } from "./types";
 
-type PatientFields = Omit<StoredPatient, "id" | "status" | "startedAt">;
+type PatientFields = Required<
+  Omit<
+    TablesUpdate<"patients">,
+    | "id"
+    | "psychologist_id"
+    | "user_id"
+    | "status"
+    | "created_at"
+    | "updated_at"
+    | "deleted_at"
+  >
+>;
 
-const patientIdSchema = z.string().min(1);
+const patientIdSchema = z.uuid();
+
+function revalidateDashboard(): void {
+  revalidatePath(ROUTES.psychologist.dashboard, "layout");
+}
 
 function toPatientFields(
   input: PatientInput,
-  defaultSessionPriceCents: StoredPatient["sessionPriceCents"],
+  defaultSessionPriceCents: Cents,
 ): PatientFields {
   return {
-    fullName: input.fullName,
+    full_name: input.fullName,
     email: emptyToNull(input.email),
     phone: emptyToNull(input.phone),
     cpf: emptyToNull(input.cpf),
-    birthDate: emptyToNull(input.birthDate),
-    sessionPriceCents:
+    birth_date: emptyToNull(input.birthDate),
+    session_price_cents:
       input.sessionPrice === undefined
         ? defaultSessionPriceCents
         : toCents(input.sessionPrice),
-    preferredModality: input.preferredModality,
-    healthInsurance: emptyToNull(input.healthInsurance),
-    emergencyContactName: emptyToNull(input.emergencyContactName),
-    emergencyContactPhone: emptyToNull(input.emergencyContactPhone),
-    paymentPlan: input.paymentPlan,
-    billingDay:
+    preferred_modality: input.preferredModality,
+    payment_plan: input.paymentPlan,
+    billing_day:
       input.paymentPlan === "monthly" ? (input.billingDay ?? null) : null,
+    health_insurance: emptyToNull(input.healthInsurance),
+    emergency_contact_name: emptyToNull(input.emergencyContactName),
+    emergency_contact_phone: emptyToNull(input.emergencyContactPhone),
     notes: emptyToNull(input.notes),
   };
 }
@@ -69,34 +74,41 @@ export async function savePatient(
   patientId: PatientId | null,
   input: PatientInput,
 ): Promise<ActionResult<{ id: PatientId }>> {
-  if (!(await getAuthorizedPsychologist())) {
-    return actionFailure(UNAUTHORIZED_MESSAGE);
-  }
+  const psychologist = await getAuthorizedPsychologist();
+  if (!psychologist) return actionFailure(UNAUTHORIZED_MESSAGE);
   const parsedInput = patientSchema.safeParse(input);
-  if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
+  const parsedId = patientIdSchema.nullable().safeParse(patientId);
+  if (!parsedInput.success || !parsedId.success) {
+    return actionFailure(INVALID_FORM_MESSAGE);
+  }
 
   const { defaultSessionPriceCents } = await getPracticeSettings();
   const fields = toPatientFields(parsedInput.data, defaultSessionPriceCents);
+  const supabase = await createClient();
 
-  if (patientId) {
-    if (!findMockPatient(patientId)) {
+  if (parsedId.data) {
+    const { data, error } = await supabase
+      .from("patients")
+      .update(fields)
+      .eq("id", parsedId.data)
+      .is("deleted_at", null)
+      .select("id");
+    if (error) return actionFailure(PATIENT_ACTION_MESSAGES.saveFailed);
+    if (data.length === 0) {
       return actionFailure(PATIENT_ACTION_MESSAGES.notFound);
     }
-    updateMockPatient(patientId, fields);
-    updateMockPendingPaymentDueDates(patientId, fields);
-    revalidatePath(ROUTES.psychologist.dashboard, "layout");
-    return actionSuccess({ id: patientId });
+    revalidateDashboard();
+    return actionSuccess({ id: parsedId.data as PatientId });
   }
 
-  const newPatientId = crypto.randomUUID() as PatientId;
-  insertMockPatient({
-    id: newPatientId,
-    status: "active",
-    startedAt: toDateKey(new Date()),
-    ...fields,
-  });
-  revalidatePath(ROUTES.psychologist.dashboard, "layout");
-  return actionSuccess({ id: newPatientId });
+  const { data, error } = await supabase
+    .from("patients")
+    .insert({ ...fields, psychologist_id: psychologist.id })
+    .select("id")
+    .single();
+  if (error) return actionFailure(PATIENT_ACTION_MESSAGES.saveFailed);
+  revalidateDashboard();
+  return actionSuccess({ id: data.id as PatientId });
 }
 
 export async function deletePatient(
@@ -107,28 +119,17 @@ export async function deletePatient(
   }
   const parsedId = patientIdSchema.safeParse(patientId);
   if (!parsedId.success) return actionFailure(INVALID_FORM_MESSAGE);
-  if (!findMockPatient(parsedId.data)) {
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_patient", {
+    p_patient_id: parsedId.data,
+    p_reason: PATIENT_ACTION_MESSAGES.removedReason,
+  });
+  if (hasDatabaseErrorCode(error, DATABASE_ERROR_CODES.notFound)) {
     return actionFailure(PATIENT_ACTION_MESSAGES.notFound);
   }
+  if (error) return actionFailure(PATIENT_ACTION_MESSAGES.saveFailed);
 
-  const now = new Date().toISOString();
-  const openAppointments = listMockAppointments().filter(
-    (appointment) =>
-      appointment.patientId === parsedId.data && canChangeSchedule(appointment),
-  );
-  for (const appointment of openAppointments) {
-    updateMockAppointment(appointment.id, {
-      status: "cancelled",
-      cancellation: {
-        cancelledAt: now,
-        cancelledBy: "psychologist",
-        reason: PATIENT_ACTION_MESSAGES.removedReason,
-        isLateCancellation: false,
-      },
-    });
-    waiveMockPayment(appointment.id);
-  }
-  updateMockPatient(parsedId.data, { deletedAt: now });
-  revalidatePath(ROUTES.psychologist.dashboard, "layout");
+  revalidateDashboard();
   return actionSuccess();
 }
