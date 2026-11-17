@@ -4,7 +4,7 @@ import { toAppTimeZone } from "@/lib/format";
 import type { Cents } from "@/lib/money";
 import type { MonthlyRevenue, Payment } from "./types";
 
-const REVENUE_MONTHS = 6;
+export const REVENUE_MONTHS = 6;
 const MONTH_KEY_FORMAT = "yyyy-MM";
 
 function toMonthKey(date: Date | string): string {
