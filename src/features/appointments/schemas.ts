@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalMeetingUrlSchema } from "@/lib/meeting-url";
 import { CANCELLATION_REASONS } from "./labels";
 import { SESSION_REPEATS } from "./recurring-sessions";
 
@@ -52,6 +53,19 @@ const sessionPlanShape = {
 };
 
 export const sessionPlanSchema = z.object(sessionPlanShape);
+
+export const meetingLinkSchema = z.object({
+  meetingUrl: optionalMeetingUrlSchema,
+});
+
+export type MeetingLinkInput = z.infer<typeof meetingLinkSchema>;
+
+export const busyIntervalsSchema = z.object({
+  date: z.iso.date(),
+  ignoredAppointmentId: z.string().min(1).optional(),
+});
+
+export type BusyIntervalsInput = z.infer<typeof busyIntervalsSchema>;
 
 export type SessionPlanSchemaInput = z.infer<typeof sessionPlanSchema>;
 

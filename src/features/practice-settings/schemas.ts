@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { fullNameSchema } from "@/features/auth/schemas";
+import { optionalMeetingUrlSchema } from "@/lib/meeting-url";
 import { timeToMinutes } from "@/lib/time-slots";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -35,6 +36,7 @@ export const practiceSettingsSchema = z.object({
   bookingWindowDays: wholeNumber("a janela de agendamento", 1, 365),
   minimumBookingNoticeHours: wholeNumber("a antecedência mínima", 0, 168),
   pixKey: z.string().trim().max(140, "Chave muito longa."),
+  meetingUrl: optionalMeetingUrlSchema,
   officeAddress: z.string().trim().max(300, "Endereço muito longo."),
   bio: z.string().trim().max(1000, "Texto muito longo."),
 });

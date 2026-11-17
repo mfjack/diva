@@ -18,6 +18,7 @@ export type PracticeSettings = {
   bookingWindowDays: number;
   minimumBookingNoticeHours: number;
   pixKey: string | null;
+  meetingUrl: string | null;
   officeAddress: string | null;
 };
 

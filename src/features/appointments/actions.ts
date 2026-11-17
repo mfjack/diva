@@ -8,7 +8,10 @@ import {
 } from "@/features/auth/errors";
 import { getAuthorizedPsychologist } from "@/features/auth/queries";
 import { getPatient } from "@/features/patients/queries";
-import { isWithinAvailability } from "@/features/practice-settings/availability";
+import {
+  type BusyInterval,
+  isWithinAvailability,
+} from "@/features/practice-settings/availability";
 import {
   getPracticeSettings,
   listAvailabilityRules,
@@ -20,6 +23,7 @@ import {
 } from "@/lib/action-result";
 import { zonedDateTime } from "@/lib/dates";
 import { ROUTES } from "@/lib/routes";
+import { emptyToNull } from "@/lib/strings";
 import {
   insertMockAppointment,
   updateMockAppointment,
@@ -35,6 +39,7 @@ import {
   getAppointment,
   getSessionPlan,
   hasConflictingAppointment,
+  listBusyIntervalsOn,
   listFollowingSeriesAppointments,
 } from "./queries";
 import {
@@ -44,11 +49,15 @@ import {
 import {
   type AppointmentStatusUpdate,
   appointmentStatusUpdateSchema,
+  type BusyIntervalsInput,
+  busyIntervalsSchema,
   type CancelAppointmentInput,
   type CreateAppointmentInput,
   cancelAppointmentSchema,
   createAppointmentSchema,
   formatCancellationReason,
+  type MeetingLinkInput,
+  meetingLinkSchema,
   type RescheduleAppointmentInput,
   rescheduleAppointmentSchema,
   type SessionPlanSchemaInput,
@@ -147,6 +156,37 @@ export async function previewSessionPlan(
   const parsedInput = sessionPlanSchema.safeParse(input);
   if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
   return actionSuccess(await getSessionPlan(parsedInput.data));
+}
+
+export async function listBusyIntervals(
+  input: BusyIntervalsInput,
+): Promise<ActionResult<BusyInterval[]>> {
+  if (!(await getAuthorizedPsychologist())) {
+    return actionFailure(UNAUTHORIZED_MESSAGE);
+  }
+  const parsedInput = busyIntervalsSchema.safeParse(input);
+  if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
+  const { date, ignoredAppointmentId } = parsedInput.data;
+  return actionSuccess(await listBusyIntervalsOn(date, ignoredAppointmentId));
+}
+
+export async function updateMeetingLink(
+  appointmentId: AppointmentId,
+  input: MeetingLinkInput,
+): Promise<ActionResult> {
+  const lookup = await findAuthorizedAppointment(appointmentId);
+  if (!lookup.isFound) return lookup.failure;
+  const parsedInput = meetingLinkSchema.safeParse(input);
+  if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
+  if (lookup.entity.modality !== "online") {
+    return actionFailure(APPOINTMENT_ACTION_MESSAGES.notOnline);
+  }
+
+  updateMockAppointment(lookup.entity.id, {
+    meetingUrl: emptyToNull(parsedInput.data.meetingUrl),
+  });
+  revalidateAppointmentViews();
+  return actionSuccess();
 }
 
 export type CreatedSessionsSummary = {

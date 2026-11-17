@@ -1,8 +1,8 @@
 "use client";
 
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, MessageCircle, Pencil } from "lucide-react";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { WhatsAppLink } from "@/components/whatsapp-link";
-import { AppointmentModalityLabel } from "@/features/appointments/components/appointment-row";
+import { AppointmentModalityLabel } from "@/features/appointments/components/appointment-modality-label";
 import { AppointmentStatusBadge } from "@/features/appointments/components/appointment-status-badge";
+import { MeetingLinkDialog } from "@/features/appointments/components/meeting-link-dialog";
 import { CANCELLATION_ACTOR_LABELS } from "@/features/appointments/labels";
+import {
+  buildMeetingLinkMessage,
+  resolveMeetingUrl,
+} from "@/features/appointments/meeting-link";
 import { hasStarted } from "@/features/appointments/status-transitions";
 import type { Appointment } from "@/features/appointments/types";
 import type { SessionNoteSummary } from "@/features/clinical-records/types";
@@ -24,6 +29,7 @@ import type { Patient } from "@/features/patients/types";
 import { formatDateTime, formatLongDate, formatTime } from "@/lib/format";
 import { getInitials } from "@/lib/get-initials";
 import { ROUTES } from "@/lib/routes";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { AppointmentActions } from "./appointment-actions";
 import { AppointmentPaymentSection } from "./appointment-payment-section";
 import { AppointmentRecordSection } from "./appointment-record-section";
@@ -34,6 +40,7 @@ type AppointmentDetailsSheetProps = {
   patient: Patient | null;
   latestSessionNote: SessionNoteSummary | null;
   pixKey: string | null;
+  practiceMeetingUrl: string | null;
   now: string;
   onOpenChange: (isOpen: boolean) => void;
   onCancelRequest: (appointment: Appointment) => void;
@@ -46,6 +53,7 @@ export function AppointmentDetailsSheet({
   patient,
   latestSessionNote,
   pixKey,
+  practiceMeetingUrl,
   now,
   onOpenChange,
   onCancelRequest,
@@ -53,19 +61,38 @@ export function AppointmentDetailsSheet({
   onRegisterPaymentRequest,
 }: AppointmentDetailsSheetProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const [isMeetingLinkOpen, setIsMeetingLinkOpen] = useState(false);
   const nowInMs = new Date(now).getTime();
+  const meetingUrl = appointment
+    ? resolveMeetingUrl(appointment, practiceMeetingUrl)
+    : null;
+  const meetingLinkWhatsAppUrl =
+    appointment && meetingUrl && patient?.phone
+      ? getWhatsAppUrl(
+          patient.phone,
+          buildMeetingLinkMessage(appointment, meetingUrl),
+        )
+      : null;
 
   async function handleCopyMeetingUrl() {
-    if (!appointment?.meetingUrl) return;
-    await navigator.clipboard.writeText(appointment.meetingUrl);
+    if (!meetingUrl) return;
+    await navigator.clipboard.writeText(meetingUrl);
     toast.success("Link da sala copiado.");
+  }
+
+  function handleEditMeetingLink() {
+    setIsMeetingLinkOpen(true);
+  }
+
+  function handleMeetingLinkOpenChange(isOpen: boolean) {
+    setIsMeetingLinkOpen(isOpen);
   }
 
   return (
     <Sheet open={appointment !== null} onOpenChange={onOpenChange}>
       <SheetContent
         initialFocus={titleRef}
-        className="w-full gap-0 sm:max-w-md"
+        className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-md"
       >
         {appointment && (
           <>
@@ -105,25 +132,63 @@ export function AppointmentDetailsSheet({
                 <DetailItem label="Modalidade">
                   <AppointmentModalityLabel modality={appointment.modality} />
                 </DetailItem>
-                {appointment.meetingUrl && (
+                {appointment.modality === "online" && (
                   <DetailItem label="Sala online">
-                    <a
-                      href={appointment.meetingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
-                    >
-                      Abrir
-                      <ExternalLink aria-hidden className="size-3.5" />
-                    </a>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="Copiar link da sala"
-                      onClick={handleCopyMeetingUrl}
-                    >
-                      <Copy aria-hidden />
-                    </Button>
+                    {meetingUrl ? (
+                      <>
+                        <a
+                          href={meetingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+                        >
+                          Abrir
+                          <ExternalLink aria-hidden className="size-3.5" />
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Copiar link da sala"
+                          onClick={handleCopyMeetingUrl}
+                        >
+                          <Copy aria-hidden />
+                        </Button>
+                        {meetingLinkWhatsAppUrl && (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Enviar link da sala pelo WhatsApp"
+                            nativeButton={false}
+                            render={
+                              <a
+                                href={meetingLinkWhatsAppUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              />
+                            }
+                          >
+                            <MessageCircle aria-hidden />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Trocar o link desta sessão"
+                          onClick={handleEditMeetingLink}
+                        >
+                          <Pencil aria-hidden />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto px-0"
+                        onClick={handleEditMeetingLink}
+                      >
+                        Adicionar link
+                      </Button>
+                    )}
                   </DetailItem>
                 )}
                 {patient?.phone && (
@@ -173,6 +238,10 @@ export function AppointmentDetailsSheet({
           </>
         )}
       </SheetContent>
+      <MeetingLinkDialog
+        appointment={isMeetingLinkOpen ? appointment : null}
+        onOpenChange={handleMeetingLinkOpenChange}
+      />
     </Sheet>
   );
 }

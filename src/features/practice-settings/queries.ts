@@ -23,6 +23,7 @@ const DEFAULT_PRACTICE_SETTINGS: Omit<PracticeSettings, "psychologistName"> = {
   bookingWindowDays: 30,
   minimumBookingNoticeHours: 2,
   pixKey: null,
+  meetingUrl: null,
   officeAddress: null,
 };
 
@@ -47,6 +48,7 @@ function toPracticeSettings(
     bookingWindowDays: row.booking_window_days,
     minimumBookingNoticeHours: row.minimum_booking_notice_hours,
     pixKey: row.pix_key,
+    meetingUrl: row.meeting_url,
     officeAddress: row.office_address,
   };
 }

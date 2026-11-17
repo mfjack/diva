@@ -31,6 +31,7 @@ function toPracticeSettingsInput(
     bookingWindowDays: settings.bookingWindowDays,
     minimumBookingNoticeHours: settings.minimumBookingNoticeHours,
     pixKey: settings.pixKey ?? "",
+    meetingUrl: settings.meetingUrl ?? "",
     officeAddress: settings.officeAddress ?? "",
     bio: settings.bio ?? "",
   };
@@ -122,6 +123,15 @@ export function PracticeSettingsForm({ settings }: PracticeSettingsFormProps) {
           name="pixKey"
           label="Chave Pix"
           placeholder="E-mail, CPF, telefone ou chave aleatória"
+          description="Vai junto nas mensagens de cobrança pelo WhatsApp."
+        />
+        <TextField
+          control={form.control}
+          name="meetingUrl"
+          label="Link da sala online"
+          type="url"
+          placeholder="https://meet.google.com/..."
+          description="Sua sala fixa do Google Meet, Zoom ou outra. Vale para todas as sessões online."
         />
         <TextField
           control={form.control}

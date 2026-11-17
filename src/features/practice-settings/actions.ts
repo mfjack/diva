@@ -64,6 +64,7 @@ export async function savePracticeSettings(
       booking_window_days: settings.bookingWindowDays,
       minimum_booking_notice_hours: settings.minimumBookingNoticeHours,
       pix_key: emptyToNull(settings.pixKey),
+      meeting_url: emptyToNull(settings.meetingUrl),
       office_address: emptyToNull(settings.officeAddress),
       bio: emptyToNull(settings.bio),
     }),
