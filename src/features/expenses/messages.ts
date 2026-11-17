@@ -6,5 +6,7 @@ export const EXPENSE_ACTION_MESSAGES = {
   notPaid: "Esse lançamento não está pago.",
   tooManyAttachments: "Cada despesa aceita até 5 anexos.",
   unsupportedAttachment: "Envie um PDF ou uma imagem (JPG, PNG ou WEBP).",
+  saveFailed: "Não foi possível salvar a despesa. Tente novamente.",
+  uploadFailed: "Não foi possível enviar o anexo. Tente novamente.",
   attachmentNotFound: "Esse anexo não existe mais. Atualize a tela.",
 } as const;

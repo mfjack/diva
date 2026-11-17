@@ -17,19 +17,7 @@ import { toDateKey } from "@/lib/dates";
 import { toCents } from "@/lib/money";
 import { ROUTES } from "@/lib/routes";
 import { emptyToNull } from "@/lib/strings";
-import {
-  deleteMockExpenseFile,
-  writeMockExpenseFile,
-} from "@/mocks/expense-files";
-import {
-  deleteMockExpense,
-  deleteMockExpensePayments,
-  findMockExpense,
-  findMockExpensePayment,
-  insertMockExpense,
-  insertMockExpensePayment,
-  updateMockExpense,
-} from "@/mocks/expenses";
+import { createClient } from "@/lib/supabase/server";
 import {
   detectAttachmentType,
   getAttachmentSizeError,
@@ -37,6 +25,7 @@ import {
   sanitizeAttachmentName,
 } from "./attachments";
 import { EXPENSE_ACTION_MESSAGES } from "./messages";
+import { getExpense, hasExpensePayment } from "./queries";
 import { canEndRecurrence, isOccurrenceOf } from "./recurrence";
 import {
   type ExpenseInput,
@@ -44,19 +33,18 @@ import {
   expenseOccurrenceSchema,
   expenseSchema,
 } from "./schemas";
-import type {
-  Expense,
-  ExpenseAttachmentId,
-  ExpenseId,
-  ExpensePaymentId,
-} from "./types";
+import {
+  EXPENSE_ATTACHMENTS_BUCKET,
+  getExpenseAttachmentPath,
+} from "./storage";
+import type { Expense, ExpenseAttachmentId, ExpenseId } from "./types";
 
-const attachmentIdSchema = z.string().min(1);
+const attachmentIdSchema = z.uuid();
 
 function findAuthorizedExpense(expenseId: string) {
   return findAuthorizedEntity(
     expenseId,
-    findMockExpense,
+    getExpense,
     EXPENSE_ACTION_MESSAGES.notFound,
   );
 }
@@ -69,45 +57,35 @@ function toExpenseFields({
   amount,
   notes,
   installmentCount,
-  ...input
+  description,
+  category,
+  recurrence,
+  startsOn,
 }: ExpenseInput) {
   return {
-    ...input,
-    amountCents: toCents(amount),
-    installmentCount:
-      input.recurrence === "installments" ? (installmentCount ?? null) : null,
+    description,
+    category,
+    recurrence,
+    starts_on: startsOn,
+    amount_cents: toCents(amount),
+    installment_count:
+      recurrence === "installments" ? (installmentCount ?? null) : null,
     notes: emptyToNull(notes),
   };
 }
 
-function createExpenseFromInput(input: ExpenseInput): ExpenseId {
-  const expenseId = crypto.randomUUID() as ExpenseId;
-  insertMockExpense({
-    ...toExpenseFields(input),
-    id: expenseId,
-    endsOn: null,
-    attachments: [],
-    createdAt: new Date().toISOString(),
-  });
-  return expenseId;
-}
-
-function updateExpenseFromInput(expense: Expense, input: ExpenseInput): void {
-  const fields = toExpenseFields(input);
-  const updatedExpense: Expense = {
-    ...expense,
-    ...fields,
-    endsOn:
-      expense.endsOn !== null && expense.endsOn >= fields.startsOn
-        ? expense.endsOn
-        : null,
-  };
-  updateMockExpense(updatedExpense.id, updatedExpense);
-  deleteMockExpensePayments(
-    (payment) =>
-      payment.expenseId === updatedExpense.id &&
-      !isOccurrenceOf(updatedExpense, payment.dueOn),
-  );
+async function deleteOrphanPayments(expense: Expense): Promise<void> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("expense_payments")
+    .select("id, due_on")
+    .eq("expense_id", expense.id);
+  const orphanIds = (data ?? [])
+    .filter(({ due_on }) => !isOccurrenceOf(expense, due_on))
+    .map(({ id }) => id);
+  if (orphanIds.length > 0) {
+    await supabase.from("expense_payments").delete().in("id", orphanIds);
+  }
 }
 
 export async function saveExpense(
@@ -115,19 +93,47 @@ export async function saveExpense(
   input: ExpenseInput,
 ): Promise<ActionResult<{ expenseId: ExpenseId }>> {
   const parsedInput = expenseSchema.safeParse(input);
+  const supabase = await createClient();
+
   if (expenseId === null) {
-    if (!(await getAuthorizedPsychologist())) {
-      return actionFailure(UNAUTHORIZED_MESSAGE);
-    }
+    const psychologist = await getAuthorizedPsychologist();
+    if (!psychologist) return actionFailure(UNAUTHORIZED_MESSAGE);
     if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
-    const createdId = createExpenseFromInput(parsedInput.data);
+    const { data, error } = await supabase
+      .from("expenses")
+      .insert({
+        ...toExpenseFields(parsedInput.data),
+        psychologist_id: psychologist.id,
+      })
+      .select("id")
+      .single();
+    if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
     revalidateFinance();
-    return actionSuccess({ expenseId: createdId });
+    return actionSuccess({ expenseId: data.id as ExpenseId });
   }
+
   const lookup = await findAuthorizedExpense(expenseId);
   if (!lookup.isFound) return lookup.failure;
   if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
-  updateExpenseFromInput(lookup.entity, parsedInput.data);
+
+  const fields = toExpenseFields(parsedInput.data);
+  const endsOn =
+    lookup.entity.endsOn !== null && lookup.entity.endsOn >= fields.starts_on
+      ? lookup.entity.endsOn
+      : null;
+  const { error } = await supabase
+    .from("expenses")
+    .update({ ...fields, ends_on: endsOn })
+    .eq("id", lookup.entity.id);
+  if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
+
+  await deleteOrphanPayments({
+    ...lookup.entity,
+    recurrence: fields.recurrence,
+    startsOn: fields.starts_on,
+    endsOn,
+    installmentCount: fields.installment_count,
+  });
   revalidateFinance();
   return actionSuccess({ expenseId: lookup.entity.id });
 }
@@ -152,17 +158,36 @@ export async function uploadExpenseAttachment(
     return actionFailure(EXPENSE_ACTION_MESSAGES.unsupportedAttachment);
   }
 
-  const attachment = {
-    id: crypto.randomUUID() as ExpenseAttachmentId,
-    fileName: sanitizeAttachmentName(file.name),
-    contentType,
-    sizeBytes: file.size,
-    uploadedAt: new Date().toISOString(),
-  };
-  await writeMockExpenseFile(attachment.id, content);
-  updateMockExpense(lookup.entity.id, {
-    attachments: [...lookup.entity.attachments, attachment],
+  const attachmentId = crypto.randomUUID() as ExpenseAttachmentId;
+  const storagePath = getExpenseAttachmentPath(
+    lookup.psychologist.id,
+    lookup.entity.id,
+    attachmentId,
+  );
+  const supabase = await createClient();
+  const { error: uploadError } = await supabase.storage
+    .from(EXPENSE_ATTACHMENTS_BUCKET)
+    .upload(storagePath, content, { contentType, upsert: false });
+  if (uploadError) {
+    return actionFailure(EXPENSE_ACTION_MESSAGES.uploadFailed);
+  }
+
+  const { error } = await supabase.from("expense_attachments").insert({
+    id: attachmentId,
+    expense_id: lookup.entity.id,
+    psychologist_id: lookup.psychologist.id,
+    storage_path: storagePath,
+    file_name: sanitizeAttachmentName(file.name),
+    content_type: contentType,
+    size_bytes: file.size,
   });
+  if (error) {
+    await supabase.storage
+      .from(EXPENSE_ATTACHMENTS_BUCKET)
+      .remove([storagePath]);
+    return actionFailure(EXPENSE_ACTION_MESSAGES.uploadFailed);
+  }
+
   revalidateFinance();
   return actionSuccess();
 }
@@ -175,16 +200,22 @@ export async function deleteExpenseAttachment(
   if (!lookup.isFound) return lookup.failure;
   const parsedAttachmentId = attachmentIdSchema.safeParse(attachmentId);
   if (!parsedAttachmentId.success) return actionFailure(INVALID_FORM_MESSAGE);
-  if (!lookup.entity.attachments.some(({ id }) => id === attachmentId)) {
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("expense_attachments")
+    .delete()
+    .eq("id", parsedAttachmentId.data)
+    .eq("expense_id", lookup.entity.id)
+    .select("storage_path");
+  if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
+  if (data.length === 0) {
     return actionFailure(EXPENSE_ACTION_MESSAGES.attachmentNotFound);
   }
 
-  await deleteMockExpenseFile(attachmentId);
-  updateMockExpense(lookup.entity.id, {
-    attachments: lookup.entity.attachments.filter(
-      ({ id }) => id !== attachmentId,
-    ),
-  });
+  await supabase.storage
+    .from(EXPENSE_ATTACHMENTS_BUCKET)
+    .remove(data.map(({ storage_path }) => storage_path));
   revalidateFinance();
   return actionSuccess();
 }
@@ -201,16 +232,19 @@ export async function markExpenseOccurrencePaid(
   if (!isOccurrenceOf(lookup.entity, dueOn)) {
     return actionFailure(EXPENSE_ACTION_MESSAGES.occurrenceNotFound);
   }
-  if (findMockExpensePayment(expenseId, dueOn)) {
+  if (await hasExpensePayment(lookup.entity.id, dueOn)) {
     return actionFailure(EXPENSE_ACTION_MESSAGES.alreadyPaid);
   }
 
-  insertMockExpensePayment({
-    id: crypto.randomUUID() as ExpensePaymentId,
-    expenseId: lookup.entity.id,
-    dueOn,
-    paidOn: toDateKey(new Date()),
+  const supabase = await createClient();
+  const { error } = await supabase.from("expense_payments").insert({
+    expense_id: lookup.entity.id,
+    psychologist_id: lookup.psychologist.id,
+    due_on: dueOn,
+    paid_on: toDateKey(new Date()),
   });
+  if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.alreadyPaid);
+
   revalidateFinance();
   return actionSuccess();
 }
@@ -224,13 +258,16 @@ export async function cancelExpenseOccurrencePayment(
   const lookup = await findAuthorizedExpense(expenseId);
   if (!lookup.isFound) return lookup.failure;
 
-  if (!findMockExpensePayment(expenseId, dueOn)) {
-    return actionFailure(EXPENSE_ACTION_MESSAGES.notPaid);
-  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("expense_payments")
+    .delete()
+    .eq("expense_id", lookup.entity.id)
+    .eq("due_on", dueOn)
+    .select("id");
+  if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
+  if (data.length === 0) return actionFailure(EXPENSE_ACTION_MESSAGES.notPaid);
 
-  deleteMockExpensePayments(
-    (payment) => payment.expenseId === expenseId && payment.dueOn === dueOn,
-  );
   revalidateFinance();
   return actionSuccess();
 }
@@ -246,7 +283,13 @@ export async function endExpenseRecurrence(
     return actionFailure(EXPENSE_ACTION_MESSAGES.cannotEnd);
   }
 
-  updateMockExpense(lookup.entity.id, { endsOn: todayKey });
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("expenses")
+    .update({ ends_on: todayKey })
+    .eq("id", lookup.entity.id);
+  if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
+
   revalidateFinance();
   return actionSuccess();
 }
@@ -257,10 +300,25 @@ export async function deleteExpense(
   const lookup = await findAuthorizedExpense(expenseId);
   if (!lookup.isFound) return lookup.failure;
 
-  await Promise.all(
-    lookup.entity.attachments.map(({ id }) => deleteMockExpenseFile(id)),
+  const supabase = await createClient();
+  const { data: attachments } = await supabase
+    .from("expense_attachments")
+    .select("storage_path")
+    .eq("expense_id", lookup.entity.id);
+  const { error } = await supabase
+    .from("expenses")
+    .delete()
+    .eq("id", lookup.entity.id);
+  if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
+
+  const storagePaths = (attachments ?? []).map(
+    ({ storage_path }) => storage_path,
   );
-  deleteMockExpense(lookup.entity.id);
+  if (storagePaths.length > 0) {
+    await supabase.storage
+      .from(EXPENSE_ATTACHMENTS_BUCKET)
+      .remove(storagePaths);
+  }
   revalidateFinance();
   return actionSuccess();
 }
