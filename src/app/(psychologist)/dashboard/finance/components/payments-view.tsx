@@ -2,7 +2,7 @@
 
 import { ReceiptText } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Empty,
   EmptyDescription,
@@ -11,13 +11,9 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type {
-  Payment,
-  PaymentId,
-  PaymentStatus,
-} from "@/features/payments/types";
+import { RegisterPaymentDialog } from "@/features/payments/components/register-payment-dialog";
+import type { Payment, PaymentStatus } from "@/features/payments/types";
 import { PaymentsTable } from "./payments-table";
-import { RegisterPaymentDialog } from "./register-payment-dialog";
 
 const STATUS_FILTERS = ["all", "pending", "paid"] as const;
 
@@ -30,7 +26,7 @@ const STATUS_FILTER_LABELS = {
 } as const satisfies Record<StatusFilter, string>;
 
 type PaymentsViewProps = {
-  initialPayments: Payment[];
+  payments: Payment[];
   pixKey: string | null;
 };
 
@@ -38,8 +34,11 @@ function matchesFilter(status: PaymentStatus, filter: StatusFilter): boolean {
   return filter === "all" || status === filter;
 }
 
-export function PaymentsView({ initialPayments, pixKey }: PaymentsViewProps) {
-  const [payments, setPayments] = useState(initialPayments);
+function isStatusFilter(value: unknown): value is StatusFilter {
+  return STATUS_FILTERS.some((filter) => filter === value);
+}
+
+export function PaymentsView({ payments, pixKey }: PaymentsViewProps) {
   const [paymentToRegister, setPaymentToRegister] = useState<Payment | null>(
     null,
   );
@@ -55,16 +54,13 @@ export function PaymentsView({ initialPayments, pixKey }: PaymentsViewProps) {
     [payments, statusFilter],
   );
 
-  const handleRegistered = useCallback(
-    (paymentId: PaymentId, changes: Partial<Payment>) => {
-      setPayments((currentPayments) =>
-        currentPayments.map((payment) =>
-          payment.id === paymentId ? { ...payment, ...changes } : payment,
-        ),
-      );
-    },
-    [],
-  );
+  function handleStatusFilterChange(value: unknown) {
+    if (isStatusFilter(value)) setStatusFilter(value);
+  }
+
+  function handleRegisterOpenChange(isOpen: boolean) {
+    if (!isOpen) setPaymentToRegister(null);
+  }
 
   return (
     <>
@@ -73,10 +69,7 @@ export function PaymentsView({ initialPayments, pixKey }: PaymentsViewProps) {
         pixKey={pixKey}
         onRegisterPayment={setPaymentToRegister}
         toolbarActions={
-          <Tabs
-            value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as StatusFilter)}
-          >
+          <Tabs value={statusFilter} onValueChange={handleStatusFilterChange}>
             <TabsList className="h-10">
               {STATUS_FILTERS.map((filter) => (
                 <TabsTrigger key={filter} value={filter} className="px-4">
@@ -101,11 +94,8 @@ export function PaymentsView({ initialPayments, pixKey }: PaymentsViewProps) {
         }
       />
       <RegisterPaymentDialog
-        payment={paymentToRegister}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) setPaymentToRegister(null);
-        }}
-        onRegistered={handleRegistered}
+        target={paymentToRegister}
+        onOpenChange={handleRegisterOpenChange}
       />
     </>
   );

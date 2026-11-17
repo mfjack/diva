@@ -4,31 +4,28 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/dialog/form-dialog";
+import { DateField } from "@/components/form/date-field";
 import { SelectField } from "@/components/form/select-field";
-import { TextField } from "@/components/form/text-field";
 import { TextareaField } from "@/components/form/textarea-field";
-import { useRegisterPaymentMutation } from "@/features/payments/hooks/use-register-payment-mutation";
-import { PAYMENT_METHOD_OPTIONS } from "@/features/payments/labels";
-import {
-  type RegisterPaymentInput,
-  registerPaymentSchema,
-} from "@/features/payments/schemas";
-import type { Payment, PaymentId } from "@/features/payments/types";
-import { zonedDateTime } from "@/lib/dates";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { useRegisterPaymentMutation } from "../hooks/use-register-payment-mutation";
+import { PAYMENT_METHOD_OPTIONS } from "../labels";
+import { type RegisterPaymentInput, registerPaymentSchema } from "../schemas";
+import type { Payment } from "../types";
 
-const DEFAULT_PAYMENT_TIME = "12:00";
+export type PaymentTarget = Pick<
+  Payment,
+  "appointmentId" | "patientName" | "sessionStartsAt" | "amountCents"
+>;
 
 type RegisterPaymentDialogProps = {
-  payment: Payment | null;
+  target: PaymentTarget | null;
   onOpenChange: (isOpen: boolean) => void;
-  onRegistered: (paymentId: PaymentId, changes: Partial<Payment>) => void;
 };
 
 export function RegisterPaymentDialog({
-  payment,
+  target,
   onOpenChange,
-  onRegistered,
 }: RegisterPaymentDialogProps) {
   const registerPaymentMutation = useRegisterPaymentMutation();
   const form = useForm<RegisterPaymentInput>({
@@ -41,36 +38,31 @@ export function RegisterPaymentDialog({
     onOpenChange(isOpen);
   }
 
+  function handleRegistered() {
+    toast.success("Pagamento registrado.");
+    handleOpenChange(false);
+  }
+
+  function handleError(error: Error) {
+    toast.error(error.message);
+  }
+
   const handleSubmit = form.handleSubmit((input) => {
-    if (!payment) return;
+    if (!target) return;
     registerPaymentMutation.mutate(
-      { paymentId: payment.id, input },
-      {
-        onSuccess: () => {
-          onRegistered(payment.id, {
-            status: "paid",
-            method: input.method,
-            paidAt: zonedDateTime(
-              input.paidOn,
-              DEFAULT_PAYMENT_TIME,
-            ).toISOString(),
-          });
-          toast.success("Pagamento registrado.");
-          handleOpenChange(false);
-        },
-        onError: (error) => toast.error(error.message),
-      },
+      { appointmentId: target.appointmentId, input },
+      { onSuccess: handleRegistered, onError: handleError },
     );
   });
 
   return (
     <FormDialog
-      isOpen={payment !== null}
+      isOpen={target !== null}
       onOpenChange={handleOpenChange}
       title="Registrar pagamento"
       description={
-        payment
-          ? `${payment.patientName} · sessão de ${formatDate(payment.sessionStartsAt)} · ${formatCurrency(payment.amountCents)}`
+        target
+          ? `${target.patientName} · sessão de ${formatDate(target.sessionStartsAt)} · ${formatCurrency(target.amountCents)}`
           : undefined
       }
       submitLabel="Registrar"
@@ -85,11 +77,11 @@ export function RegisterPaymentDialog({
             label="Forma de pagamento"
             options={PAYMENT_METHOD_OPTIONS}
           />
-          <TextField
+          <DateField
             control={form.control}
             name="paidOn"
             label="Data"
-            type="date"
+            allowedDates="up-to-today"
           />
         </div>
         <TextareaField

@@ -11,9 +11,17 @@ const PAYMENT_STATUS_TONES = {
 
 type PaymentStatusBadgeProps = {
   status: PaymentStatus;
+  isSessionUpcoming?: boolean;
 };
 
-export function PaymentStatusBadge({ status }: PaymentStatusBadgeProps) {
+export function PaymentStatusBadge({
+  status,
+  isSessionUpcoming = false,
+}: PaymentStatusBadgeProps) {
+  if (status === "pending" && isSessionUpcoming) {
+    return <StatusBadge tone="neutral">A cobrar</StatusBadge>;
+  }
+
   return (
     <StatusBadge tone={PAYMENT_STATUS_TONES[status]}>
       {PAYMENT_STATUS_LABELS[status]}
