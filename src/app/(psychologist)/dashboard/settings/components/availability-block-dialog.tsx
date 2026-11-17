@@ -4,7 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/dialog/form-dialog";
+import { DateField } from "@/components/form/date-field";
 import { TextField } from "@/components/form/text-field";
+import { TimeField } from "@/components/form/time-field";
 import { useCreateAvailabilityBlockMutation } from "@/features/practice-settings/hooks/use-create-availability-block-mutation";
 import {
   type AvailabilityBlockInput,
@@ -74,30 +76,20 @@ export function AvailabilityBlockDialog({
     >
       <div className="flex flex-col gap-5">
         <div className="grid grid-cols-2 gap-4">
-          <TextField
+          <DateField
             control={form.control}
             name="startDate"
             label="De"
-            type="date"
+            allowedDates="today-onwards"
           />
-          <TextField
-            control={form.control}
-            name="startTime"
-            label="Horário"
-            type="time"
-          />
-          <TextField
+          <TimeField control={form.control} name="startTime" label="Horário" />
+          <DateField
             control={form.control}
             name="endDate"
             label="Até"
-            type="date"
+            allowedDates="today-onwards"
           />
-          <TextField
-            control={form.control}
-            name="endTime"
-            label="Horário"
-            type="time"
-          />
+          <TimeField control={form.control} name="endTime" label="Horário" />
         </div>
         <TextField
           control={form.control}

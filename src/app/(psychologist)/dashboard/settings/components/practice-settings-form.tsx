@@ -23,6 +23,7 @@ function toPracticeSettingsInput(
   settings: PracticeSettings,
 ): PracticeSettingsInput {
   return {
+    psychologistName: settings.psychologistName,
     professionalRegistration: settings.professionalRegistration,
     sessionDurationMinutes: settings.sessionDurationMinutes,
     defaultSessionPrice: fromCents(settings.defaultSessionPriceCents),
@@ -60,6 +61,15 @@ export function PracticeSettingsForm({ settings }: PracticeSettingsFormProps) {
       onSubmit={handleSubmit}
     >
       <div className="grid gap-5 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <TextField
+            control={form.control}
+            name="psychologistName"
+            label="Nome"
+            placeholder="Seu nome"
+            description="Aparece no menu, nos recibos e nos documentos."
+          />
+        </div>
         <TextField
           control={form.control}
           name="professionalRegistration"

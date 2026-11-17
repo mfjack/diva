@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { parseTime } from "@/lib/dates";
+import { fullNameSchema } from "@/features/auth/schemas";
+import { timeToMinutes } from "@/lib/time-slots";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
-const MINUTES_IN_HOUR = 60;
 
 export const ANY_MODALITY = "any";
 
@@ -21,6 +21,7 @@ function wholeNumber(label: string, min: number, max: number) {
 }
 
 export const practiceSettingsSchema = z.object({
+  psychologistName: fullNameSchema,
   professionalRegistration: z
     .string()
     .trim()
@@ -40,11 +41,6 @@ export const practiceSettingsSchema = z.object({
 
 export type PracticeSettingsInput = z.infer<typeof practiceSettingsSchema>;
 
-function toMinutes(time: string): number {
-  const { hours, minutes } = parseTime(time);
-  return hours * MINUTES_IN_HOUR + minutes;
-}
-
 const availabilityIntervalSchema = z
   .object({
     weekday: z.number().int().min(0).max(6),
@@ -53,7 +49,8 @@ const availabilityIntervalSchema = z
     modality: z.enum([ANY_MODALITY, "in_person", "online"]),
   })
   .refine(
-    ({ startTime, endTime }) => toMinutes(endTime) > toMinutes(startTime),
+    ({ startTime, endTime }) =>
+      timeToMinutes(endTime) > timeToMinutes(startTime),
     { message: "O fim deve ser depois do início.", path: ["endTime"] },
   );
 
@@ -69,8 +66,10 @@ export const weeklyAvailabilitySchema = z
         (otherInterval, otherIndex) =>
           otherIndex < index &&
           otherInterval.weekday === interval.weekday &&
-          toMinutes(interval.startTime) < toMinutes(otherInterval.endTime) &&
-          toMinutes(interval.endTime) > toMinutes(otherInterval.startTime),
+          timeToMinutes(interval.startTime) <
+            timeToMinutes(otherInterval.endTime) &&
+          timeToMinutes(interval.endTime) >
+            timeToMinutes(otherInterval.startTime),
       );
       if (overlapsAnotherInterval) {
         context.addIssue({

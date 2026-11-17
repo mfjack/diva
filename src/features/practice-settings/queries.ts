@@ -1,9 +1,9 @@
 import "server-only";
 
 import {
-  mockAvailabilityBlocks,
-  mockAvailabilityRules,
-  mockPracticeSettings,
+  getMockPracticeSettings,
+  listMockAvailabilityBlocks,
+  listMockAvailabilityRules,
 } from "@/mocks/practice";
 import type {
   AvailabilityBlock,
@@ -12,13 +12,13 @@ import type {
 } from "./types";
 
 export async function getPracticeSettings(): Promise<PracticeSettings> {
-  return mockPracticeSettings;
+  return getMockPracticeSettings();
 }
 
 export async function listAvailabilityRules(): Promise<AvailabilityRule[]> {
-  return mockAvailabilityRules;
+  return listMockAvailabilityRules();
 }
 
 export async function listAvailabilityBlocks(): Promise<AvailabilityBlock[]> {
-  return mockAvailabilityBlocks;
+  return listMockAvailabilityBlocks();
 }

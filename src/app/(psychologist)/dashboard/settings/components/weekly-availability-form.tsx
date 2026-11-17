@@ -5,7 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { SelectField } from "@/components/form/select-field";
-import { TextField } from "@/components/form/text-field";
+import { TimeField } from "@/components/form/time-field";
 import { Button } from "@/components/ui/button";
 import { useSaveWeeklyAvailabilityMutation } from "@/features/practice-settings/hooks/use-save-weekly-availability-mutation";
 import { WEEKDAY_LABELS, WEEKDAYS } from "@/features/practice-settings/labels";
@@ -108,19 +108,17 @@ export function WeeklyAvailabilityForm({ rules }: WeeklyAvailabilityFormProps) {
                     key={field.id}
                     className="grid grid-cols-[1fr_1fr_auto] items-start gap-2 sm:grid-cols-[8rem_8rem_1fr_auto]"
                   >
-                    <TextField
+                    <TimeField
                       control={form.control}
                       name={`intervals.${index}.startTime`}
                       label={`Início, ${WEEKDAY_LABELS[weekday]}`}
                       isLabelHidden
-                      type="time"
                     />
-                    <TextField
+                    <TimeField
                       control={form.control}
                       name={`intervals.${index}.endTime`}
                       label={`Fim, ${WEEKDAY_LABELS[weekday]}`}
                       isLabelHidden
-                      type="time"
                     />
                     <div className="col-span-2 row-start-2 sm:col-span-1 sm:row-start-auto">
                       <SelectField
