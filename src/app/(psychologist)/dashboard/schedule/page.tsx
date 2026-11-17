@@ -58,6 +58,17 @@ export default async function SchedulePage({
     sessionDurationMinutes: settings.sessionDurationMinutes,
   };
 
+  if (rules.length === 0) {
+    return (
+      <>
+        <PageHeader title="Agenda" />
+        <PageContent>
+          <MissingAvailabilityNotice />
+        </PageContent>
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col lg:h-svh lg:flex-none lg:overflow-hidden">
       <PageHeader
@@ -81,7 +92,6 @@ export default async function SchedulePage({
         }
       />
       <PageContent className="lg:min-h-0 lg:pb-6">
-        {rules.length === 0 && <MissingAvailabilityNotice />}
         <ScheduleBoard
           appointments={mergeAppointments(
             weekAppointments,

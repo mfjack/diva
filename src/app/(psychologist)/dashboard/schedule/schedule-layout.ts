@@ -30,18 +30,12 @@ type BlockPosition = {
   heightRem: number;
 };
 
-const DEFAULT_WORKING_WEEKDAYS = [1, 2, 3, 4, 5] as const;
-
 export function getVisibleDateKeys(
   weekDateKeys: readonly string[],
   rules: readonly Pick<AvailabilityRule, "weekday">[],
   appointments: readonly Pick<Appointment, "startsAt">[],
 ): string[] {
-  const workingWeekdays = new Set<number>(
-    rules.length > 0
-      ? rules.map(({ weekday }) => weekday)
-      : DEFAULT_WORKING_WEEKDAYS,
-  );
+  const workingWeekdays = new Set<number>(rules.map(({ weekday }) => weekday));
 
   return weekDateKeys.filter(
     (dateKey) =>

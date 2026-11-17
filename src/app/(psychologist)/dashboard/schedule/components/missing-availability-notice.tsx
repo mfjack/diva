@@ -1,34 +1,39 @@
-import { Clock } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import Link from "next/link";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { ROUTES } from "@/lib/routes";
 
 const AVAILABILITY_SETTINGS_HREF = `${ROUTES.psychologist.settings}?tab=availability`;
 
 export function MissingAvailabilityNotice() {
   return (
-    <Alert>
-      <Clock aria-hidden />
-      <AlertTitle>Configure seus horários de atendimento</AlertTitle>
-      <AlertDescription>
-        Os horários definem os dias da agenda e as opções na hora de agendar uma
-        sessão.
-      </AlertDescription>
-      <AlertAction>
+    <Empty className="flex-1 border border-dashed">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <CalendarClock aria-hidden />
+        </EmptyMedia>
+        <EmptyTitle>Configure seus horários de atendimento</EmptyTitle>
+        <EmptyDescription>
+          A agenda aparece assim que você definir os dias e horários em que
+          atende.
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
         <Button
-          size="sm"
           nativeButton={false}
           render={<Link href={AVAILABILITY_SETTINGS_HREF} />}
         >
           Configurar horários
         </Button>
-      </AlertAction>
-    </Alert>
+      </EmptyContent>
+    </Empty>
   );
 }
