@@ -2,7 +2,6 @@
 
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { FieldSeparator } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { useGoogleSignInMutation } from "../hooks/use-google-sign-in-mutation";
@@ -26,19 +25,16 @@ export function GoogleSignIn({ label, nextPath }: GoogleSignInProps) {
   }
 
   return (
-    <>
-      <FieldSeparator>ou</FieldSeparator>
-      <Button
-        type="button"
-        variant="outline"
-        disabled={isRedirecting}
-        aria-busy={isRedirecting}
-        onClick={handleGoogleSignIn}
-        className={cn(AUTH_BUTTON_CLASS_NAME, "gap-2.5 font-normal")}
-      >
-        {isRedirecting ? <Spinner aria-hidden /> : <GoogleIcon />}
-        {label}
-      </Button>
-    </>
+    <Button
+      type="button"
+      variant="outline"
+      disabled={isRedirecting}
+      aria-busy={isRedirecting}
+      onClick={handleGoogleSignIn}
+      className={cn(AUTH_BUTTON_CLASS_NAME, "gap-2.5 font-normal")}
+    >
+      {isRedirecting ? <Spinner aria-hidden /> : <GoogleIcon />}
+      {label}
+    </Button>
   );
 }

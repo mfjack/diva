@@ -10,8 +10,6 @@ type AuthFormProps = {
   submitLabel: string;
   isSubmitting: boolean;
   errorMessage?: string;
-  successMessage?: string;
-  alternativeAction?: ReactNode;
   children: ReactNode;
 };
 
@@ -20,8 +18,6 @@ export function AuthForm({
   submitLabel,
   isSubmitting,
   errorMessage,
-  successMessage,
-  alternativeAction,
   children,
 }: AuthFormProps) {
   return (
@@ -30,9 +26,6 @@ export function AuthForm({
         {children}
 
         {errorMessage && <AuthAlert>{errorMessage}</AuthAlert>}
-        {successMessage && (
-          <AuthAlert variant="success">{successMessage}</AuthAlert>
-        )}
 
         <div className="flex flex-col gap-4 pt-2">
           <Button
@@ -44,7 +37,6 @@ export function AuthForm({
             {isSubmitting && <Spinner aria-hidden />}
             {submitLabel}
           </Button>
-          {alternativeAction}
         </div>
       </FieldGroup>
     </form>
