@@ -4,10 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/dialog/form-dialog";
+import { DateField } from "@/components/form/date-field";
 import { MaskedField } from "@/components/form/masked-field";
 import { NumberField } from "@/components/form/number-field";
+import { SelectField } from "@/components/form/select-field";
 import { TextField } from "@/components/form/text-field";
 import { TextareaField } from "@/components/form/textarea-field";
+import { APPOINTMENT_MODALITY_OPTIONS } from "@/features/appointments/labels";
 import { useSavePatientMutation } from "../hooks/use-save-patient-mutation";
 import {
   EMPTY_PATIENT_INPUT,
@@ -20,7 +23,7 @@ type PatientFormDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   patientId: PatientId | null;
-  defaultValues?: PatientInput;
+  defaultValues?: Partial<PatientInput>;
 };
 
 export function PatientFormDialog({
@@ -100,11 +103,11 @@ export function PatientFormDialog({
             placeholder="000.000.000-00"
             description="Usado nos recibos para reembolso e IR."
           />
-          <TextField
+          <DateField
             control={form.control}
             name="birthDate"
             label="Data de nascimento"
-            type="date"
+            allowedDates="up-to-today"
           />
         </fieldset>
 
@@ -117,6 +120,14 @@ export function PatientFormDialog({
             format="currency"
             placeholder="Valor padrão do consultório"
             description="Deixe em branco para usar o valor padrão."
+          />
+          <SelectField
+            control={form.control}
+            name="preferredModality"
+            label="Modalidade de atendimento"
+            placeholder="Presencial ou online"
+            options={APPOINTMENT_MODALITY_OPTIONS}
+            description="Usada automaticamente ao agendar as sessões."
           />
           <TextField
             control={form.control}

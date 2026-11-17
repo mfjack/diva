@@ -10,6 +10,7 @@ export function toPatientInput(patient: Patient): PatientInput {
     cpf: patient.cpf ?? "",
     birthDate: patient.birthDate ?? "",
     sessionPrice: fromCents(patient.sessionPriceCents),
+    preferredModality: patient.preferredModality,
     healthInsurance: patient.healthInsurance ?? "",
     emergencyContactName: patient.emergencyContactName ?? "",
     emergencyContactPhone: patient.emergencyContactPhone ?? "",

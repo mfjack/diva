@@ -1,23 +1,33 @@
 import { differenceInYears } from "date-fns";
-import { FilePlus2 } from "lucide-react";
+import {
+  CalendarClock,
+  CircleCheck,
+  CircleDollarSign,
+  FilePlus2,
+  Hourglass,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { PageContent } from "@/components/layout/page-content";
 import { PageHeader } from "@/components/layout/page-header";
+import { Section } from "@/components/layout/section";
+import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
-import { UrlTabs } from "@/components/url-tabs";
 import { WhatsAppLink } from "@/components/whatsapp-link";
+import { APPOINTMENT_MODALITY_LABELS } from "@/features/appointments/labels";
 import { listPatientAppointments } from "@/features/appointments/queries";
 import { listPatientClinicalRecords } from "@/features/clinical-records/queries";
 import { PatientStatusBadge } from "@/features/patients/components/patient-status-badge";
 import { getPatient } from "@/features/patients/queries";
 import { listPatientPayments } from "@/features/payments/queries";
-import { formatCurrency, formatDate } from "@/lib/format";
+import type { Payment } from "@/features/payments/types";
+import { dateKeyToLocalDate, formatDateKey } from "@/lib/dates";
+import { formatCurrency, formatShortDate, formatTime } from "@/lib/format";
 import { formatCpf } from "@/lib/masks";
+import type { Cents } from "@/lib/money";
 import { ROUTES } from "@/lib/routes";
-import { EditPatientButton } from "./components/edit-patient-button";
 import { PatientAppointmentsList } from "./components/patient-appointments-list";
 import { PatientPaymentsList } from "./components/patient-payments-list";
 import { PatientRecordsList } from "./components/patient-records-list";
@@ -44,6 +54,12 @@ function InfoItem({ label, children }: InfoItemProps) {
   );
 }
 
+function getPaidTotalCents(payments: readonly Payment[]): Cents {
+  return payments
+    .filter(({ status }) => status === "paid")
+    .reduce((total, { amountCents }) => total + amountCents, 0) as Cents;
+}
+
 export default async function PatientPage({
   params,
 }: PageProps<"/dashboard/patients/[patientId]">) {
@@ -61,28 +77,63 @@ export default async function PatientPage({
     <>
       <PageHeader
         title={patient.fullName}
-        description={`Em acompanhamento desde ${formatDate(patient.startedAt)} · ${patient.completedSessionCount} sessões realizadas`}
+        description={`Em acompanhamento desde ${formatDateKey(patient.startedAt)}`}
         actions={
-          <>
-            <EditPatientButton patient={patient} />
-            <Button
-              nativeButton={false}
-              render={
-                <Link
-                  href={`${ROUTES.psychologist.records}/new?patientId=${patient.id}`}
-                />
-              }
-            >
-              <FilePlus2 aria-hidden />
-              Novo documento
-            </Button>
-          </>
+          <Button
+            nativeButton={false}
+            render={
+              <Link
+                href={`${ROUTES.psychologist.records}/new?patientId=${patient.id}`}
+              />
+            }
+          >
+            <FilePlus2 aria-hidden />
+            Novo documento
+          </Button>
         }
       />
       <PageContent>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Próxima sessão"
+            value={
+              patient.nextAppointmentAt
+                ? formatShortDate(patient.nextAppointmentAt)
+                : "Sem horário"
+            }
+            hint={
+              patient.nextAppointmentAt
+                ? `às ${formatTime(patient.nextAppointmentAt)}`
+                : "Nenhuma sessão agendada"
+            }
+            icon={CalendarClock}
+          />
+          <StatCard
+            label="Sessões realizadas"
+            value={String(patient.completedSessionCount)}
+            hint={`${appointments.length} no histórico`}
+            icon={CircleCheck}
+          />
+          <StatCard
+            label="Total pago"
+            value={formatCurrency(getPaidTotalCents(payments))}
+            hint={`Sessão a ${formatCurrency(patient.sessionPriceCents)}`}
+            icon={CircleDollarSign}
+          />
+          <StatCard
+            label="Em aberto"
+            value={formatCurrency(patient.pendingAmountCents)}
+            hint="Sessões ainda não pagas"
+            icon={Hourglass}
+          />
+        </div>
+
         <div className="grid gap-8 lg:grid-cols-3">
           <aside className="flex flex-col gap-5 rounded-xl border p-5 lg:self-start">
-            <PatientStatusBadge status={patient.status} />
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold text-base">Dados</h2>
+              <PatientStatusBadge status={patient.status} />
+            </div>
             <dl className="grid grid-cols-2 gap-4 lg:grid-cols-1">
               {patient.phone && (
                 <InfoItem label="WhatsApp">
@@ -101,22 +152,25 @@ export default async function PatientPage({
               )}
               {patient.birthDate && (
                 <InfoItem label="Nascimento">
-                  {formatDate(`${patient.birthDate}T12:00:00Z`)} (
-                  {differenceInYears(new Date(), new Date(patient.birthDate))}{" "}
+                  {formatDateKey(patient.birthDate)} (
+                  {differenceInYears(
+                    new Date(),
+                    dateKeyToLocalDate(patient.birthDate),
+                  )}{" "}
                   anos)
                 </InfoItem>
               )}
               {patient.cpf && (
                 <InfoItem label="CPF">{formatCpf(patient.cpf)}</InfoItem>
               )}
-              <InfoItem label="Valor da sessão">
-                {formatCurrency(patient.sessionPriceCents)}
+              <InfoItem label="Pagamento">
+                {patient.healthInsurance
+                  ? `Convênio · ${patient.healthInsurance}`
+                  : "Particular"}
               </InfoItem>
-              {patient.healthInsurance && (
-                <InfoItem label="Plano de saúde">
-                  {patient.healthInsurance}
-                </InfoItem>
-              )}
+              <InfoItem label="Modalidade">
+                {APPOINTMENT_MODALITY_LABELS[patient.preferredModality]}
+              </InfoItem>
               {patient.emergencyContactName && (
                 <InfoItem label="Contato de emergência">
                   <span className="flex flex-col gap-0.5">
@@ -136,28 +190,16 @@ export default async function PatientPage({
             )}
           </aside>
 
-          <div className="lg:col-span-2">
-            <UrlTabs
-              tabs={[
-                {
-                  value: "sessions",
-                  label: `Sessões (${appointments.length})`,
-                  content: (
-                    <PatientAppointmentsList appointments={appointments} />
-                  ),
-                },
-                {
-                  value: "payments",
-                  label: "Financeiro",
-                  content: <PatientPaymentsList payments={payments} />,
-                },
-                {
-                  value: "records",
-                  label: `Prontuário (${records.length})`,
-                  content: <PatientRecordsList records={records} />,
-                },
-              ]}
-            />
+          <div className="flex flex-col gap-8 lg:col-span-2">
+            <Section title="Sessões">
+              <PatientAppointmentsList appointments={appointments} />
+            </Section>
+            <Section title="Financeiro">
+              <PatientPaymentsList payments={payments} />
+            </Section>
+            <Section title="Prontuário">
+              <PatientRecordsList records={records} />
+            </Section>
           </div>
         </div>
       </PageContent>

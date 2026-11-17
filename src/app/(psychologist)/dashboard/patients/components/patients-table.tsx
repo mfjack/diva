@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type ReactNode, useMemo } from "react";
 import { DataTable } from "@/components/data-table/data-table";
 import { createDataTableColumnHelper } from "@/components/data-table/data-table-features";
+import { DataTableRowActions } from "@/components/data-table/data-table-row-actions";
 import { useDataTable } from "@/components/data-table/use-data-table";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 import { PatientStatusBadge } from "@/features/patients/components/patient-status-badge";
@@ -17,13 +18,20 @@ const columnHelper = createDataTableColumnHelper<Patient>();
 type PatientsTableProps = {
   patients: Patient[];
   emptyState: ReactNode;
+  onEditRequest: (patient: Patient) => void;
+  onDeleteRequest: (patient: Patient) => void;
 };
 
 function getPatientRowId(patient: Patient) {
   return patient.id;
 }
 
-export function PatientsTable({ patients, emptyState }: PatientsTableProps) {
+export function PatientsTable({
+  patients,
+  emptyState,
+  onEditRequest,
+  onDeleteRequest,
+}: PatientsTableProps) {
   const columns = useMemo(
     () =>
       columnHelper.columns([
@@ -102,8 +110,19 @@ export function PatientsTable({ patients, emptyState }: PatientsTableProps) {
             );
           },
         }),
+        columnHelper.display({
+          id: "actions",
+          header: () => <span className="sr-only">Ações</span>,
+          cell: ({ row }) => (
+            <DataTableRowActions
+              itemLabel={row.original.fullName}
+              onEdit={() => onEditRequest(row.original)}
+              onDelete={() => onDeleteRequest(row.original)}
+            />
+          ),
+        }),
       ]),
-    [],
+    [onEditRequest, onDeleteRequest],
   );
 
   const table = useDataTable({

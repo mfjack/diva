@@ -2,12 +2,12 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { EmptyListMessage } from "@/components/feedback/empty-list-message";
 import { CLINICAL_RECORD_KIND_LABELS } from "@/features/clinical-records/labels";
-import type { ClinicalRecord } from "@/features/clinical-records/types";
+import type { ClinicalRecordSummary } from "@/features/clinical-records/types";
 import { formatDate } from "@/lib/format";
 import { ROUTES } from "@/lib/routes";
 
 type PatientRecordsListProps = {
-  records: ClinicalRecord[];
+  records: ClinicalRecordSummary[];
 };
 
 export function PatientRecordsList({ records }: PatientRecordsListProps) {
@@ -21,7 +21,7 @@ export function PatientRecordsList({ records }: PatientRecordsListProps) {
         <li key={record.id}>
           <Link
             href={`${ROUTES.psychologist.records}/${record.id}`}
-            className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/60"
+            className="flex items-center gap-4 px-4 py-3 text-sm transition-colors hover:bg-muted/60"
           >
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="truncate font-medium">{record.title}</span>

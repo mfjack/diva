@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidCpf, isValidPhone } from "@/lib/masks";
+import { Constants } from "@/lib/supabase/database.types";
 
 const optionalText = (maxLength: number) =>
   z.string().trim().max(maxLength, "Texto muito longo.");
@@ -27,6 +28,9 @@ export const patientSchema = z.object({
     .number()
     .nonnegative("O valor não pode ser negativo.")
     .optional(),
+  preferredModality: z.enum(Constants.public.Enums.appointment_modality, {
+    error: "Escolha a modalidade de atendimento.",
+  }),
   healthInsurance: optionalText(80),
   emergencyContactName: optionalText(120),
   emergencyContactPhone: optionalPhone,
@@ -35,7 +39,7 @@ export const patientSchema = z.object({
 
 export type PatientInput = z.infer<typeof patientSchema>;
 
-export const EMPTY_PATIENT_INPUT: PatientInput = {
+export const EMPTY_PATIENT_INPUT: Partial<PatientInput> = {
   fullName: "",
   email: "",
   phone: "",

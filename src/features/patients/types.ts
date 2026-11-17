@@ -1,3 +1,4 @@
+import type { AppointmentModality } from "@/features/appointments/types";
 import type { Brand } from "@/lib/brand";
 import type { Cents } from "@/lib/money";
 import type { Enums } from "@/lib/supabase/database.types";
@@ -15,6 +16,7 @@ export type Patient = {
   cpf: string | null;
   status: PatientStatus;
   sessionPriceCents: Cents;
+  preferredModality: AppointmentModality;
   healthInsurance: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
