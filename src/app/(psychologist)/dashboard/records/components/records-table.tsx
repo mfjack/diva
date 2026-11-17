@@ -78,6 +78,7 @@ export function RecordsTable({ records }: RecordsTableProps) {
 
   return (
     <DataTable
+      className="md:flex-1"
       table={table}
       searchPlaceholder="Buscar por título, paciente ou tipo"
       emptyState={

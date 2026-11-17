@@ -1,21 +1,22 @@
 "use client";
 
 import type { RowData } from "@tanstack/react-table";
-import type { ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 import { SearchInput } from "@/components/search-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DataTablePagination } from "./data-table-pagination";
+import { cn } from "@/lib/utils";
+import { DataTableFooter } from "./data-table-footer";
+import { DataTableLoadMore } from "./data-table-load-more";
 import { DataTableSortableHeader } from "./data-table-sortable-header";
-import type { DataTableInstance } from "./use-data-table";
+import { type DataTableInstance, resetLoadedRows } from "./use-data-table";
 
 const LOADING_ROW_COUNT = 5;
 const ACTIONS_COLUMN_ID = "actions";
@@ -27,6 +28,7 @@ type DataTableProps<TData extends RowData> = {
   errorMessage?: string;
   emptyState: ReactNode;
   toolbarActions?: ReactNode;
+  className?: string;
 };
 
 export function DataTable<TData extends RowData>({
@@ -36,7 +38,9 @@ export function DataTable<TData extends RowData>({
   errorMessage,
   emptyState,
   toolbarActions,
+  className,
 }: DataTableProps<TData>) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const rows = table.getRowModel().rows;
   const columnCount = table.getAllLeafColumns().length;
   const hasData = table.getCoreRowModel().rows.length > 0;
@@ -58,14 +62,15 @@ export function DataTable<TData extends RowData>({
   if (!isLoading && !hasData) return emptyState;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className={cn("flex min-h-0 flex-col gap-4", className)}>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <SearchInput
           placeholder={searchPlaceholder}
           value={table.state.globalFilter ?? ""}
           onChange={(value) => {
             table.setGlobalFilter(value);
-            table.setPageIndex(0);
+            resetLoadedRows(table);
+            scrollContainerRef.current?.scrollTo({ top: 0 });
           }}
           className="sm:max-w-xs"
         />
@@ -132,11 +137,15 @@ export function DataTable<TData extends RowData>({
             Nenhum resultado para essa busca.
           </p>
         )}
+        <DataTableLoadMore table={table} loadedRowCount={rows.length} />
       </div>
 
-      <div className="hidden overflow-hidden rounded-xl border md:block">
-        <Table>
-          <TableHeader>
+      <div
+        ref={scrollContainerRef}
+        className="isolate hidden min-h-0 flex-1 overflow-auto rounded-xl border md:block"
+      >
+        <table data-slot="table" className="w-full caption-bottom text-sm">
+          <TableHeader className="sticky top-0 z-10 bg-background">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-muted/60">
                 {headerGroup.headers.map((header) => (
@@ -180,10 +189,15 @@ export function DataTable<TData extends RowData>({
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </table>
+        <DataTableLoadMore
+          table={table}
+          loadedRowCount={rows.length}
+          scrollContainerRef={scrollContainerRef}
+        />
       </div>
 
-      <DataTablePagination table={table} />
+      <DataTableFooter table={table} />
     </div>
   );
 }

@@ -4,13 +4,12 @@ import {
   type RowData,
   useTable,
 } from "@tanstack/react-table";
-import { useEffect } from "react";
 import {
   type DataTableFeatures,
   dataTableFeatures,
 } from "./data-table-features";
 
-const DEFAULT_PAGE_SIZE = 20;
+export const DATA_TABLE_BATCH_SIZE = 20;
 
 type UseDataTableOptions<TData extends RowData> = {
   data: TData[];
@@ -28,7 +27,7 @@ export function useDataTable<TData extends RowData>({
   columns,
   getRowId,
 }: UseDataTableOptions<TData>): DataTableInstance<TData> {
-  const table = useTable({
+  return useTable({
     features: dataTableFeatures,
     data,
     columns,
@@ -36,18 +35,23 @@ export function useDataTable<TData extends RowData>({
     globalFilterFn: "includesString",
     autoResetPageIndex: false,
     initialState: {
-      pagination: { pageIndex: 0, pageSize: DEFAULT_PAGE_SIZE },
+      pagination: { pageIndex: 0, pageSize: DATA_TABLE_BATCH_SIZE },
     },
   });
+}
 
-  const pageCount = table.getPageCount();
-  const pageIndex = table.state.pagination.pageIndex;
+export function loadMoreRows<TData extends RowData>(
+  table: DataTableInstance<TData>,
+): void {
+  if (!table.getCanNextPage()) return;
+  table.setPageSize(
+    (currentPageSize) => currentPageSize + DATA_TABLE_BATCH_SIZE,
+  );
+}
 
-  useEffect(() => {
-    if (pageCount > 0 && pageIndex >= pageCount) {
-      table.setPageIndex(pageCount - 1);
-    }
-  }, [table, pageCount, pageIndex]);
-
-  return table;
+export function resetLoadedRows<TData extends RowData>(
+  table: DataTableInstance<TData>,
+): void {
+  table.setPageIndex(0);
+  table.setPageSize(DATA_TABLE_BATCH_SIZE);
 }

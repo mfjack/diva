@@ -147,6 +147,7 @@ export function PaymentsTable({
 
   return (
     <DataTable
+      className="md:max-h-[40rem]"
       table={table}
       searchPlaceholder="Buscar paciente"
       emptyState={emptyState}

@@ -133,6 +133,7 @@ export function PatientsTable({
 
   return (
     <DataTable
+      className="md:flex-1"
       table={table}
       searchPlaceholder="Buscar paciente"
       emptyState={emptyState}

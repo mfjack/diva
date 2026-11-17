@@ -16,7 +16,7 @@ export default async function RecordsPage() {
   const records = await listClinicalRecords();
 
   return (
-    <>
+    <div className="flex flex-1 flex-col md:h-svh md:flex-none md:overflow-hidden">
       <PageHeader
         title="Prontuários"
         description="Evoluções, laudos, declarações e encaminhamentos. Conteúdo criptografado e visível só para você."
@@ -30,9 +30,9 @@ export default async function RecordsPage() {
           </Button>
         }
       />
-      <PageContent>
+      <PageContent className="md:min-h-0 md:pb-6">
         <RecordsTable records={records} />
       </PageContent>
-    </>
+    </div>
   );
 }

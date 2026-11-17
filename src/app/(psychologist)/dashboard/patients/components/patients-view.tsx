@@ -69,7 +69,7 @@ export function PatientsView({ patients }: PatientsViewProps) {
   }
 
   return (
-    <>
+    <div className="flex flex-1 flex-col md:h-svh md:flex-none md:overflow-hidden">
       <PageHeader
         title="Pacientes"
         description={`${activeCount} em atendimento · ${patients.length} no total`}
@@ -80,7 +80,7 @@ export function PatientsView({ patients }: PatientsViewProps) {
           </Button>
         }
       />
-      <PageContent>
+      <PageContent className="md:min-h-0 md:pb-6">
         <PatientsTable
           patients={patients}
           onEditRequest={handleEditRequest}
@@ -128,6 +128,6 @@ export function PatientsView({ patients }: PatientsViewProps) {
           patientId={null}
         />
       )}
-    </>
+    </div>
   );
 }
