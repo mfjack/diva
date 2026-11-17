@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCurrency, formatDateTime } from "./format";
+import { formatCurrency, formatDateTime, formatShortDate } from "./format";
 import { toCents } from "./money";
 
 describe("formatCurrency", () => {
@@ -15,5 +15,11 @@ describe("formatCurrency", () => {
 describe("formatDateTime", () => {
   it("converts UTC to the São Paulo time zone", () => {
     expect(formatDateTime("2026-10-01T17:00:00Z")).toBe("01/10/2026 às 14:00");
+  });
+});
+
+describe("formatShortDate", () => {
+  it("shows weekday, day and month in São Paulo time", () => {
+    expect(formatShortDate("2026-11-18T21:00:00.000Z")).toBe("qua, 18 nov");
   });
 });

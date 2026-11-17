@@ -46,3 +46,18 @@ export function minutesBetween(start: Date | string, end: Date | string) {
     (new Date(end).getTime() - new Date(start).getTime()) / 60_000,
   );
 }
+
+const LOCAL_DATE_KEY_FORMAT = "yyyy-MM-dd";
+
+export function dateKeyToLocalDate(dateKey: string): Date {
+  const [year = 1970, month = 1, day = 1] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+export function localDateToDateKey(date: Date): string {
+  return format(date, LOCAL_DATE_KEY_FORMAT);
+}
+
+export function formatDateKey(dateKey: string): string {
+  return format(dateKeyToLocalDate(dateKey), "dd/MM/yyyy");
+}

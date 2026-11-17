@@ -14,19 +14,10 @@ const currencyFormatter = new Intl.NumberFormat(LOCALE, {
   maximumFractionDigits: 2,
 });
 
-const percentFormatter = new Intl.NumberFormat(LOCALE, {
-  style: "percent",
-  maximumFractionDigits: 1,
-});
-
 export function formatCurrency(cents: Cents): string {
   const amount = fromCents(cents);
   const sign = amount < 0 ? "-" : "";
   return `${sign}${CURRENCY_SYMBOL} ${currencyFormatter.format(Math.abs(amount))}`;
-}
-
-export function formatPercent(value: number): string {
-  return percentFormatter.format(value);
 }
 
 export function toAppTimeZone(date: Date | string): TZDate {
@@ -45,6 +36,10 @@ export function formatDateTime(date: Date | string): string {
   return format(toAppTimeZone(date), "dd/MM/yyyy 'às' HH:mm", {
     locale: ptBR,
   });
+}
+
+export function formatShortDate(date: Date | string): string {
+  return format(toAppTimeZone(date), "EEEEEE, d MMM", { locale: ptBR });
 }
 
 export function formatLongDate(date: Date | string): string {

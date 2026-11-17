@@ -1,6 +1,6 @@
 export const CPF_PATTERN = "###.###.###-##";
-export const LANDLINE_PHONE_PATTERN = "(##) ####-####";
-export const MOBILE_PHONE_PATTERN = "(##) #####-####";
+const LANDLINE_PHONE_PATTERN = "(##) ####-####";
+const MOBILE_PHONE_PATTERN = "(##) #####-####";
 
 const LANDLINE_PHONE_LENGTH = 10;
 const ELEVEN_DIGITS_PATTERN = /^\d{11}$/;
