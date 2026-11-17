@@ -24,7 +24,7 @@ function toPracticeSettingsInput(
 ): PracticeSettingsInput {
   return {
     psychologistName: settings.psychologistName,
-    professionalRegistration: settings.professionalRegistration,
+    professionalRegistration: settings.professionalRegistration ?? "",
     sessionDurationMinutes: settings.sessionDurationMinutes,
     defaultSessionPrice: fromCents(settings.defaultSessionPriceCents),
     cancellationNoticeHours: settings.cancellationNoticeHours,

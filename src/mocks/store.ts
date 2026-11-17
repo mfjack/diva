@@ -8,16 +8,7 @@ import type { ClinicalRecord } from "@/features/clinical-records/types";
 import type { Expense, ExpensePayment } from "@/features/expenses/types";
 import type { Patient } from "@/features/patients/types";
 import type { Payment } from "@/features/payments/types";
-import type {
-  AvailabilityBlock,
-  AvailabilityRule,
-  PracticeSettings,
-} from "@/features/practice-settings/types";
 import type { StudyNote } from "@/features/studies/types";
-import {
-  DEFAULT_AVAILABILITY_RULES,
-  DEFAULT_PRACTICE_SETTINGS,
-} from "./practice-defaults";
 
 export type StoredPatient = Omit<
   Patient,
@@ -31,9 +22,6 @@ export type StoredClinicalRecord = Omit<ClinicalRecord, "content"> & {
 export type StoredStudyNote = StudyNote & { deletedAt?: string | null };
 
 export type MockDatabase = {
-  practiceSettings: PracticeSettings;
-  availabilityRules: AvailabilityRule[];
-  availabilityBlocks: AvailabilityBlock[];
   patients: StoredPatient[];
   appointments: Appointment[];
   payments: Payment[];
@@ -48,9 +36,6 @@ const DATABASE_FILE = path.join(process.cwd(), ".data", "mock-db.json");
 
 function createEmptyDatabase(): MockDatabase {
   return {
-    practiceSettings: DEFAULT_PRACTICE_SETTINGS,
-    availabilityRules: DEFAULT_AVAILABILITY_RULES,
-    availabilityBlocks: [],
     patients: [],
     appointments: [],
     payments: [],

@@ -847,6 +847,10 @@ export type Database = {
     }
     Functions: {
       is_psychologist: { Args: never; Returns: boolean }
+      replace_availability_rules: {
+        Args: { p_rules: Json }
+        Returns: undefined
+      }
     }
     Enums: {
       appointment_modality: "in_person" | "online"
