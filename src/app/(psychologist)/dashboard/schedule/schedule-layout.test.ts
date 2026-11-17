@@ -46,6 +46,10 @@ describe("getVisibleDateKeys", () => {
     );
     expect(visibleDateKeys).toEqual([MONDAY, SATURDAY]);
   });
+
+  it("falls back to Monday to Friday when no hours are configured", () => {
+    expect(getVisibleDateKeys(WEEK, [], [])).toEqual(WEEK.slice(0, 5));
+  });
 });
 
 describe("getHourRange", () => {

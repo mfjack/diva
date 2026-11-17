@@ -12,6 +12,7 @@ import {
   listAvailabilityRules,
 } from "@/features/practice-settings/queries";
 import { getWeekDateKeys, parseWeekOffset } from "@/lib/week";
+import { MissingAvailabilityNotice } from "./components/missing-availability-notice";
 import { NewAppointmentButton } from "./components/new-appointment-button";
 import { ScheduleBoard } from "./components/schedule-board";
 import { WeekNavigator } from "./components/week-navigator";
@@ -80,6 +81,7 @@ export default async function SchedulePage({
         }
       />
       <PageContent className="lg:min-h-0 lg:pb-6">
+        {rules.length === 0 && <MissingAvailabilityNotice />}
         <ScheduleBoard
           appointments={mergeAppointments(
             weekAppointments,
