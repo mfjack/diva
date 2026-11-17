@@ -10,7 +10,7 @@ export const APPOINTMENT_STATUS_LABELS = {
   confirmed: "Confirmada",
   completed: "Realizada",
   cancelled: "Cancelada",
-  no_show: "Falta",
+  no_show: "Faltou",
 } as const satisfies Record<AppointmentStatus, string>;
 
 export const APPOINTMENT_MODALITY_LABELS = {

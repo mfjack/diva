@@ -47,7 +47,7 @@ export function FormFieldShell({
         <FieldError
           id={descriptionId}
           errors={[error]}
-          className="text-[0.8125rem]"
+          className="text-[0.6875rem]"
         />
       ) : (
         description && (

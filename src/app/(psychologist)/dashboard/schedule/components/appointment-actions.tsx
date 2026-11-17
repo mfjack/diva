@@ -34,7 +34,7 @@ const STATUS_UPDATE_ACTIONS = {
     variant: "default",
   },
   no_show: {
-    label: "Falta",
+    label: "Faltou",
     successMessage: "Falta registrada.",
     icon: UserX,
     variant: "outline",

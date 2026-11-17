@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { AppointmentModalityLabel } from "@/features/appointments/components/appointment-row";
+import { AppointmentModalityLabel } from "@/features/appointments/components/appointment-modality-label";
 import type { Appointment } from "@/features/appointments/types";
 import { formatShortDate, formatTime } from "@/lib/format";
 import { getInitials } from "@/lib/get-initials";
