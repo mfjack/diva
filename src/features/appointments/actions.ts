@@ -25,20 +25,15 @@ import { zonedDateTime } from "@/lib/dates";
 import { ROUTES } from "@/lib/routes";
 import { emptyToNull } from "@/lib/strings";
 import {
-  insertMockAppointment,
-  updateMockAppointment,
-} from "@/mocks/appointments";
-import {
-  insertMockPayment,
-  updateMockPaymentSession,
-  waiveMockPayment,
-} from "@/mocks/payments";
+  DATABASE_ERROR_CODES,
+  hasDatabaseErrorCode,
+} from "@/lib/supabase/errors";
+import { createClient } from "@/lib/supabase/server";
 import { isLateCancellation } from "./cancellation-policy";
 import { APPOINTMENT_ACTION_MESSAGES } from "./messages";
 import {
   getAppointment,
   getSessionPlan,
-  hasConflictingAppointment,
   listBusyIntervalsOn,
   listFollowingSeriesAppointments,
 } from "./queries";
@@ -64,7 +59,7 @@ import {
   sessionPlanSchema,
 } from "./schemas";
 import { canChangeSchedule, canUpdateStatus } from "./status-transitions";
-import type { Appointment, AppointmentId, AppointmentSeriesId } from "./types";
+import type { AppointmentId } from "./types";
 
 function findAuthorizedAppointment(appointmentId: string) {
   return findAuthorizedEntity(
@@ -76,6 +71,16 @@ function findAuthorizedAppointment(appointmentId: string) {
 
 function revalidateAppointmentViews() {
   revalidatePath(ROUTES.psychologist.dashboard, "layout");
+}
+
+function getScheduleFailure(error: { code?: string } | null): string {
+  if (hasDatabaseErrorCode(error, DATABASE_ERROR_CODES.exclusionViolation)) {
+    return APPOINTMENT_ACTION_MESSAGES.conflict;
+  }
+  if (hasDatabaseErrorCode(error, DATABASE_ERROR_CODES.notFound)) {
+    return APPOINTMENT_ACTION_MESSAGES.notFound;
+  }
+  return APPOINTMENT_ACTION_MESSAGES.saveFailed;
 }
 
 export async function updateAppointmentStatus(
@@ -92,7 +97,12 @@ export async function updateAppointmentStatus(
     return actionFailure(APPOINTMENT_ACTION_MESSAGES.invalidTransition);
   }
 
-  updateMockAppointment(appointment.id, { status: parsedStatus.data });
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("appointments")
+    .update({ status: parsedStatus.data })
+    .eq("id", appointment.id);
+  if (error) return actionFailure(getScheduleFailure(error));
   revalidateAppointmentViews();
   return actionSuccess();
 }
@@ -126,25 +136,20 @@ export async function cancelAppointment(
       : [appointment];
 
   const { cancellationNoticeHours } = await getPracticeSettings();
-  const cancelledAt = new Date().toISOString();
-  const reason = formatCancellationReason(parsedInput.data);
-  for (const appointmentToCancel of appointmentsToCancel) {
-    updateMockAppointment(appointmentToCancel.id, {
-      status: "cancelled",
-      cancellation: {
-        cancelledAt,
-        cancelledBy: "psychologist",
-        reason,
-        isLateCancellation: isLateCancellation(
-          appointmentToCancel.startsAt,
-          cancellationNoticeHours,
-        ),
-      },
-    });
-    waiveMockPayment(appointmentToCancel.id);
-  }
+  const supabase = await createClient();
+  const { data: cancelledCount, error } = await supabase.rpc(
+    "cancel_appointments",
+    {
+      p_reason: formatCancellationReason(parsedInput.data),
+      p_cancellations: appointmentsToCancel.map(({ id, startsAt }) => ({
+        id,
+        is_late: isLateCancellation(startsAt, cancellationNoticeHours),
+      })),
+    },
+  );
+  if (error) return actionFailure(getScheduleFailure(error));
   revalidateAppointmentViews();
-  return actionSuccess({ cancelledCount: appointmentsToCancel.length });
+  return actionSuccess({ cancelledCount });
 }
 
 export async function previewSessionPlan(
@@ -182,9 +187,12 @@ export async function updateMeetingLink(
     return actionFailure(APPOINTMENT_ACTION_MESSAGES.notOnline);
   }
 
-  updateMockAppointment(lookup.entity.id, {
-    meetingUrl: emptyToNull(parsedInput.data.meetingUrl),
-  });
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("appointments")
+    .update({ meeting_url: emptyToNull(parsedInput.data.meetingUrl) })
+    .eq("id", lookup.entity.id);
+  if (error) return actionFailure(getScheduleFailure(error));
   revalidateAppointmentViews();
   return actionSuccess();
 }
@@ -232,28 +240,22 @@ export async function createAppointment(
     );
   }
 
-  const seriesId =
-    planInput.repeat === "none"
-      ? null
-      : (crypto.randomUUID() as AppointmentSeriesId);
-  for (const { startsAt, endsAt } of bookableSessions) {
-    const appointment = {
-      id: crypto.randomUUID() as AppointmentId,
-      patientId: patient.id,
-      patientName: patient.fullName,
-      seriesId,
-      startsAt,
-      endsAt,
-      modality: patient.preferredModality,
-      status: "confirmed",
-      priceCents: patient.sessionPriceCents,
-      paymentStatus: "pending",
-      meetingUrl: null,
-      cancellation: null,
-    } satisfies Appointment;
-    insertMockAppointment(appointment);
-    insertMockPayment(appointment);
-  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("create_appointments", {
+    p_patient_id: patient.id,
+    p_sessions: bookableSessions.map(({ startsAt, endsAt }) => ({
+      starts_at: startsAt,
+      ends_at: endsAt,
+    })),
+    ...(planInput.repeat === "none"
+      ? {}
+      : {
+          p_repeat: planInput.repeat,
+          p_series_starts_on: sessions[0]?.dateKey,
+          p_series_ends_on: sessions.at(-1)?.dateKey,
+        }),
+  });
+  if (error) return actionFailure(getScheduleFailure(error));
   revalidateAppointmentViews();
   return actionSuccess({
     createdCount: bookableSessions.length,
@@ -295,21 +297,15 @@ export async function rescheduleAppointment(
     new Date(appointment.endsAt).getTime() -
     new Date(appointment.startsAt).getTime();
   const endsAt = new Date(startsAt.getTime() + durationInMs);
-  if (
-    await hasConflictingAppointment(
-      startsAt.toISOString(),
-      endsAt.toISOString(),
-      appointment.id,
-    )
-  ) {
-    return actionFailure(APPOINTMENT_ACTION_MESSAGES.conflict);
-  }
-
-  updateMockAppointment(appointment.id, {
-    startsAt: startsAt.toISOString(),
-    endsAt: endsAt.toISOString(),
-  });
-  updateMockPaymentSession(appointment.id, startsAt.toISOString());
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("appointments")
+    .update({
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+    })
+    .eq("id", appointment.id);
+  if (error) return actionFailure(getScheduleFailure(error));
   revalidateAppointmentViews();
   return actionSuccess();
 }
