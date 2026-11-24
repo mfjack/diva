@@ -23,6 +23,7 @@ export const AUTH_ROUTES = [ROUTES.login] as const;
 export const PUBLIC_ROUTES = [
   ...AUTH_ROUTES,
   "/auth",
+  "/api/keep-alive",
   ROUTES.terms,
   ROUTES.privacy,
 ] as const;
