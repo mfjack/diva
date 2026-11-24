@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { MAX_BILLING_DAY, MIN_BILLING_DAY } from "@/features/payments/due-date";
+import {
+  isMonthlyPaymentPlan,
+  MAX_BILLING_DAY,
+  MIN_BILLING_DAY,
+} from "@/features/payments/due-date";
 import { isValidCpf, isValidPhone } from "@/lib/masks";
 import { Constants } from "@/lib/supabase/database.types";
 
@@ -57,7 +61,7 @@ export const patientSchema = z
   })
   .refine(
     ({ paymentPlan, billingDay }) =>
-      paymentPlan !== "monthly" || billingDay !== undefined,
+      !isMonthlyPaymentPlan(paymentPlan) || billingDay !== undefined,
     {
       path: ["billingDay"],
       message: "Informe o dia do pagamento.",

@@ -7,6 +7,7 @@ import {
   UNAUTHORIZED_MESSAGE,
 } from "@/features/auth/errors";
 import { getAuthorizedPsychologist } from "@/features/auth/queries";
+import { isMonthlyPaymentPlan } from "@/features/payments/due-date";
 import { getPracticeSettings } from "@/features/practice-settings/queries";
 import {
   type ActionResult,
@@ -61,8 +62,9 @@ function toPatientFields(
         : toCents(input.sessionPrice),
     preferred_modality: input.preferredModality,
     payment_plan: input.paymentPlan,
-    billing_day:
-      input.paymentPlan === "monthly" ? (input.billingDay ?? null) : null,
+    billing_day: isMonthlyPaymentPlan(input.paymentPlan)
+      ? (input.billingDay ?? null)
+      : null,
     health_insurance: emptyToNull(input.healthInsurance),
     emergency_contact_name: emptyToNull(input.emergencyContactName),
     emergency_contact_phone: emptyToNull(input.emergencyContactPhone),

@@ -28,14 +28,18 @@ describe("patientSchema", () => {
   });
 
   it("exige o dia do pagamento no plano mensal", () => {
-    expect(getIssuePaths({ ...VALID_PATIENT, paymentPlan: "monthly" })).toEqual(
-      ["billingDay"],
-    );
+    expect(
+      getIssuePaths({ ...VALID_PATIENT, paymentPlan: "monthly_before" }),
+    ).toEqual(["billingDay"]);
   });
 
   it("aponta o dia do pagamento junto com os outros erros", () => {
     expect(
-      getIssuePaths({ ...VALID_PATIENT, fullName: "", paymentPlan: "monthly" }),
+      getIssuePaths({
+        ...VALID_PATIENT,
+        fullName: "",
+        paymentPlan: "monthly_before",
+      }),
     ).toEqual(["fullName", "billingDay"]);
   });
 
@@ -43,7 +47,7 @@ describe("patientSchema", () => {
     expect(
       getIssuePaths({
         ...VALID_PATIENT,
-        paymentPlan: "monthly",
+        paymentPlan: "monthly_before",
         billingDay: 31,
       }),
     ).toEqual(["billingDay"]);

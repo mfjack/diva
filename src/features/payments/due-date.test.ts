@@ -11,12 +11,21 @@ describe("getPaymentDueDate", () => {
     ).toBe("2026-11-18");
   });
 
-  it("vence no dia escolhido do mês da sessão quando paga por mês", () => {
+  it("vence no dia escolhido do mês da sessão quando paga antes", () => {
     expect(
       getPaymentDueDate(
-        { paymentPlan: "monthly", billingDay: 5 },
+        { paymentPlan: "monthly_before", billingDay: 5 },
         "2026-11-25",
       ),
     ).toBe("2026-11-05");
+  });
+
+  it("vence no dia escolhido do mês seguinte quando paga após as sessões", () => {
+    expect(
+      getPaymentDueDate(
+        { paymentPlan: "monthly_after", billingDay: 5 },
+        "2026-12-16",
+      ),
+    ).toBe("2027-01-05");
   });
 });

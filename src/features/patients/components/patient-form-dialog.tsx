@@ -11,7 +11,11 @@ import { SelectField } from "@/components/form/select-field";
 import { TextField } from "@/components/form/text-field";
 import { TextareaField } from "@/components/form/textarea-field";
 import { APPOINTMENT_MODALITY_OPTIONS } from "@/features/appointments/labels";
-import { MAX_BILLING_DAY, MIN_BILLING_DAY } from "@/features/payments/due-date";
+import {
+  isMonthlyPaymentPlan,
+  MAX_BILLING_DAY,
+  MIN_BILLING_DAY,
+} from "@/features/payments/due-date";
 import {
   PAYMENT_PLAN_DESCRIPTIONS,
   PAYMENT_PLAN_OPTIONS,
@@ -139,14 +143,14 @@ export function PatientFormDialog({
                 : "Define quando cada pagamento vence."
             }
           />
-          {paymentPlan === "monthly" && (
+          {paymentPlan && isMonthlyPaymentPlan(paymentPlan) && (
             <NumberField
               control={form.control}
               name="billingDay"
               label="Dia do pagamento"
               format="integer"
               placeholder={`Entre ${MIN_BILLING_DAY} e ${MAX_BILLING_DAY}`}
-              description="Depois desse dia, as sessões do mês ficam em atraso."
+              description="Depois desse dia, o pagamento fica em atraso."
             />
           )}
           <TextField

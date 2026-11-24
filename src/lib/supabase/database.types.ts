@@ -1048,7 +1048,7 @@ export type Database = {
         | "credit_card"
         | "debit_card"
         | "bank_transfer"
-      payment_plan: "per_session" | "monthly"
+      payment_plan: "per_session" | "monthly_before" | "monthly_after"
       payment_status: "pending" | "paid" | "waived" | "refunded"
       session_repeat: "weekly" | "biweekly"
       study_note_kind:
@@ -1221,7 +1221,7 @@ export const Constants = {
         "debit_card",
         "bank_transfer",
       ],
-      payment_plan: ["per_session", "monthly"],
+      payment_plan: ["per_session", "monthly_before", "monthly_after"],
       payment_status: ["pending", "paid", "waived", "refunded"],
       session_repeat: ["weekly", "biweekly"],
       study_note_kind: [
