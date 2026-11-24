@@ -1,34 +1,43 @@
+import type { AppointmentId } from "@/features/appointments/types";
 import type { PatientId } from "@/features/patients/types";
+import type { Attachment } from "@/lib/attachments";
 import type { Brand } from "@/lib/brand";
-import type { Enums } from "@/lib/supabase/database.types";
 
 export type ClinicalRecordId = Brand<string, "ClinicalRecordId">;
 
-export type DocumentTemplateId = Brand<string, "DocumentTemplateId">;
+export type ClinicalRecordAttachmentId = Brand<
+  string,
+  "ClinicalRecordAttachmentId"
+>;
 
-export type ClinicalRecordKind = Enums<"clinical_record_kind">;
+export type ClinicalRecordAttachment = Attachment & {
+  id: ClinicalRecordAttachmentId;
+};
 
 export type ClinicalRecord = {
   id: ClinicalRecordId;
   patientId: PatientId;
   patientName: string;
-  kind: ClinicalRecordKind;
+  appointmentId: AppointmentId | null;
+  sessionStartsAt: string | null;
   title: string;
   content: string;
   createdAt: string;
   updatedAt: string;
+  attachments: ClinicalRecordAttachment[];
 };
 
-export type ClinicalRecordSummary = Omit<ClinicalRecord, "content">;
-
-export type DocumentTemplate = {
-  id: DocumentTemplateId;
-  kind: ClinicalRecordKind;
-  title: string;
-  content: string;
-};
+export type ClinicalRecordSummary = Omit<
+  ClinicalRecord,
+  "content" | "attachments"
+>;
 
 export type SessionNoteSummary = Pick<
   ClinicalRecord,
-  "id" | "patientId" | "createdAt"
+  "id" | "patientId" | "appointmentId" | "createdAt"
 >;
+
+export type SessionOption = {
+  appointmentId: AppointmentId;
+  startsAt: string;
+};

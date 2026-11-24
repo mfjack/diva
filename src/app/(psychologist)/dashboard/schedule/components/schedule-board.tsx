@@ -29,7 +29,7 @@ type ScheduleBoardProps = {
   pixKey: string | null;
   practiceMeetingUrl: string | null;
   availability: SessionAvailability;
-  latestSessionNotes: SessionNoteSummary[];
+  sessionNotes: SessionNoteSummary[];
 };
 
 function toPaymentTarget(appointment: Appointment): PaymentTarget {
@@ -50,7 +50,7 @@ export function ScheduleBoard({
   pixKey,
   practiceMeetingUrl,
   availability,
-  latestSessionNotes,
+  sessionNotes,
 }: ScheduleBoardProps) {
   const [selectedAppointmentId, setSelectedAppointmentId] = useQueryState(
     "session",
@@ -84,8 +84,8 @@ export function ScheduleBoard({
     ? (patients.find(({ id }) => id === selectedAppointment.patientId) ?? null)
     : null;
   const selectedSessionNote = selectedAppointment
-    ? (latestSessionNotes.find(
-        ({ patientId }) => patientId === selectedAppointment.patientId,
+    ? (sessionNotes.find(
+        ({ appointmentId }) => appointmentId === selectedAppointment.id,
       ) ?? null)
     : null;
   const confirmingAppointmentId = confirmMutation.isPending
@@ -165,7 +165,7 @@ export function ScheduleBoard({
       <AppointmentDetailsSheet
         appointment={selectedAppointment}
         patient={selectedPatient}
-        latestSessionNote={selectedSessionNote}
+        sessionNote={selectedSessionNote}
         pixKey={pixKey}
         practiceMeetingUrl={practiceMeetingUrl}
         now={now}

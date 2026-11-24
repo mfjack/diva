@@ -108,7 +108,7 @@ export default async function PatientPage({
               }
             >
               <FilePlus2 aria-hidden />
-              Novo documento
+              Nova anotação
             </Button>
           </>
         }

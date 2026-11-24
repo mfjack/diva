@@ -1,42 +1,43 @@
 import type { Metadata } from "next";
 import { PageContent } from "@/components/layout/page-content";
 import { PageHeader } from "@/components/layout/page-header";
+import { getAppointment } from "@/features/appointments/queries";
 import { ClinicalRecordEditor } from "@/features/clinical-records/components/clinical-record-editor";
-import { listDocumentTemplates } from "@/features/clinical-records/queries";
-import { clinicalRecordSchema } from "@/features/clinical-records/schemas";
 import { listPatients } from "@/features/patients/queries";
 import { getSingleSearchParam } from "@/lib/search-params";
 
 export const metadata: Metadata = {
-  title: "Novo documento",
+  title: "Nova anotação",
 };
 
 export default async function NewRecordPage({
   searchParams,
 }: PageProps<"/dashboard/records/new">) {
-  const { patientId, kind } = await searchParams;
-  const [patients, templates] = await Promise.all([
+  const params = await searchParams;
+  const appointmentIdParam = getSingleSearchParam(params.appointmentId);
+  const [patients, appointment] = await Promise.all([
     listPatients(),
-    listDocumentTemplates(),
+    appointmentIdParam ? getAppointment(appointmentIdParam) : null,
   ]);
-  const initialPatientId = patients.find(({ id }) => id === patientId)?.id;
-  const parsedKind = clinicalRecordSchema.shape.kind.safeParse(
-    getSingleSearchParam(kind),
-  );
-  const initialKind = parsedKind.success ? parsedKind.data : undefined;
+  const patientIdParam =
+    appointment?.patientId ?? getSingleSearchParam(params.patientId);
+  const initialPatientId = patients.find(({ id }) => id === patientIdParam)?.id;
 
   return (
     <>
       <PageHeader
-        title="Novo documento"
-        description="Escolha um modelo ou escreva do zero."
+        title="Nova anotação"
+        description="Registre a sessão e, depois de salvar, anexe documentos."
       />
       <PageContent>
         <ClinicalRecordEditor
           recordId={null}
-          defaultValues={{ patientId: initialPatientId, kind: initialKind }}
+          defaultValues={{
+            patientId: initialPatientId,
+            appointmentId: appointment?.id ?? "",
+          }}
           patients={patients}
-          templates={templates}
+          attachments={[]}
         />
       </PageContent>
     </>

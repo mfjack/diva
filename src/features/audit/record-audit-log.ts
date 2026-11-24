@@ -6,7 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 export type AuditAction =
   | "clinical_record.viewed"
   | "clinical_record.created"
-  | "clinical_record.updated";
+  | "clinical_record.updated"
+  | "clinical_record_attachment.uploaded"
+  | "clinical_record_attachment.viewed"
+  | "clinical_record_attachment.deleted";
 
 type RecordAuditLogInput = {
   actorUserId: UserId;

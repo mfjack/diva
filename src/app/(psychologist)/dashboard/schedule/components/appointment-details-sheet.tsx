@@ -38,7 +38,7 @@ import { DetailItem, DetailsSection } from "./details-section";
 type AppointmentDetailsSheetProps = {
   appointment: Appointment | null;
   patient: Patient | null;
-  latestSessionNote: SessionNoteSummary | null;
+  sessionNote: SessionNoteSummary | null;
   pixKey: string | null;
   practiceMeetingUrl: string | null;
   now: string;
@@ -51,7 +51,7 @@ type AppointmentDetailsSheetProps = {
 export function AppointmentDetailsSheet({
   appointment,
   patient,
-  latestSessionNote,
+  sessionNote,
   pixKey,
   practiceMeetingUrl,
   now,
@@ -208,7 +208,7 @@ export function AppointmentDetailsSheet({
 
               <AppointmentRecordSection
                 appointment={appointment}
-                latestSessionNote={latestSessionNote}
+                sessionNote={sessionNote}
               />
 
               {appointment.cancellation && (

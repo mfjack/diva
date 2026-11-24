@@ -58,3 +58,34 @@ export function decryptClinicalContent(payload: string): string {
     decipher.final(),
   ]).toString("utf8");
 }
+
+const AUTH_TAG_LENGTH_IN_BYTES = 16;
+const FILE_HEADER_LENGTH = IV_LENGTH_IN_BYTES + AUTH_TAG_LENGTH_IN_BYTES;
+
+export function encryptClinicalFile(content: Uint8Array): Uint8Array {
+  const initializationVector = randomBytes(IV_LENGTH_IN_BYTES);
+  const cipher = createCipheriv(
+    ALGORITHM,
+    getEncryptionKey(),
+    initializationVector,
+  );
+  const cipherText = Buffer.concat([cipher.update(content), cipher.final()]);
+  return Buffer.concat([initializationVector, cipher.getAuthTag(), cipherText]);
+}
+
+export function decryptClinicalFile(payload: Uint8Array): Uint8Array {
+  if (payload.byteLength < FILE_HEADER_LENGTH) {
+    throw new Error("Invalid clinical file payload.");
+  }
+  const buffer = Buffer.from(payload);
+  const decipher = createDecipheriv(
+    ALGORITHM,
+    getEncryptionKey(),
+    buffer.subarray(0, IV_LENGTH_IN_BYTES),
+  );
+  decipher.setAuthTag(buffer.subarray(IV_LENGTH_IN_BYTES, FILE_HEADER_LENGTH));
+  return Buffer.concat([
+    decipher.update(buffer.subarray(FILE_HEADER_LENGTH)),
+    decipher.final(),
+  ]);
+}

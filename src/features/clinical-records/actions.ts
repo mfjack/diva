@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { recordAuditLog } from "@/features/audit/record-audit-log";
 import {
   INVALID_FORM_MESSAGE,
@@ -13,13 +14,47 @@ import {
   actionFailure,
   actionSuccess,
 } from "@/lib/action-result";
+import {
+  ATTACHMENT_UPLOAD_MESSAGES,
+  readAttachmentUpload,
+} from "@/lib/attachment-upload";
 import { ROUTES } from "@/lib/routes";
+import { emptyToNull } from "@/lib/strings";
 import { createClient } from "@/lib/supabase/server";
-import { encryptClinicalContent } from "./content-encryption";
+import {
+  encryptClinicalContent,
+  encryptClinicalFile,
+} from "./content-encryption";
 import { CLINICAL_RECORD_ACTION_MESSAGES } from "./messages";
-import { hasClinicalRecord } from "./queries";
-import { type ClinicalRecordInput, clinicalRecordSchema } from "./schemas";
-import type { ClinicalRecordId } from "./types";
+import {
+  countClinicalRecordAttachments,
+  hasClinicalRecord,
+  isPatientSession,
+  listPatientSessionOptions,
+} from "./queries";
+import {
+  type ClinicalRecordInput,
+  clinicalRecordSchema,
+  patientSessionsSchema,
+} from "./schemas";
+import {
+  CLINICAL_RECORD_ATTACHMENTS_BUCKET,
+  ENCRYPTED_FILE_CONTENT_TYPE,
+  getClinicalRecordAttachmentPath,
+} from "./storage";
+import type {
+  ClinicalRecordAttachmentId,
+  ClinicalRecordId,
+  SessionOption,
+} from "./types";
+
+const SESSION_NOTE_KIND = "session_note";
+
+const attachmentIdSchema = z.uuid();
+
+function revalidateRecords(): void {
+  revalidatePath(ROUTES.psychologist.dashboard, "layout");
+}
 
 export async function saveClinicalRecord(
   recordId: ClinicalRecordId | null,
@@ -34,13 +69,18 @@ export async function saveClinicalRecord(
   if (!patient) {
     return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.patientNotFound);
   }
+  const appointmentId = emptyToNull(parsedInput.data.appointmentId);
+  if (appointmentId && !(await isPatientSession(patient.id, appointmentId))) {
+    return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.sessionNotFound);
+  }
 
   const fields = {
     patient_id: patient.id,
-    kind: parsedInput.data.kind,
+    appointment_id: appointmentId,
+    kind: SESSION_NOTE_KIND,
     title: parsedInput.data.title,
     encrypted_content: encryptClinicalContent(parsedInput.data.content),
-  };
+  } as const;
   const supabase = await createClient();
 
   let savedRecordId: ClinicalRecordId;
@@ -70,6 +110,110 @@ export async function saveClinicalRecord(
     entityType: "clinical_record",
     entityId: savedRecordId,
   });
-  revalidatePath(ROUTES.psychologist.dashboard, "layout");
+  revalidateRecords();
   return actionSuccess({ id: savedRecordId });
+}
+
+export async function listSessionOptions(
+  patientId: string,
+): Promise<ActionResult<SessionOption[]>> {
+  if (!(await getAuthorizedPsychologist())) {
+    return actionFailure(UNAUTHORIZED_MESSAGE);
+  }
+  const parsedId = patientSessionsSchema.safeParse(patientId);
+  if (!parsedId.success) return actionFailure(INVALID_FORM_MESSAGE);
+  return actionSuccess(await listPatientSessionOptions(parsedId.data));
+}
+
+export async function uploadClinicalRecordAttachment(
+  recordId: ClinicalRecordId,
+  formData: FormData,
+): Promise<ActionResult> {
+  const psychologist = await getAuthorizedPsychologist();
+  if (!psychologist) return actionFailure(UNAUTHORIZED_MESSAGE);
+  const attachmentCount = await countClinicalRecordAttachments(recordId);
+  if (attachmentCount === null) {
+    return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.recordNotFound);
+  }
+  const upload = await readAttachmentUpload(formData, attachmentCount);
+  if (!upload.isValid) return actionFailure(upload.message);
+
+  const attachmentId = crypto.randomUUID() as ClinicalRecordAttachmentId;
+  const storagePath = getClinicalRecordAttachmentPath(
+    psychologist.id,
+    recordId,
+    attachmentId,
+  );
+  const supabase = await createClient();
+  const { error: uploadError } = await supabase.storage
+    .from(CLINICAL_RECORD_ATTACHMENTS_BUCKET)
+    .upload(storagePath, encryptClinicalFile(upload.content), {
+      contentType: ENCRYPTED_FILE_CONTENT_TYPE,
+      upsert: false,
+    });
+  if (uploadError) {
+    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.uploadFailed);
+  }
+
+  const { error } = await supabase.from("clinical_record_attachments").insert({
+    id: attachmentId,
+    record_id: recordId,
+    psychologist_id: psychologist.id,
+    storage_path: storagePath,
+    file_name: upload.fileName,
+    content_type: upload.contentType,
+    size_bytes: upload.sizeBytes,
+  });
+  if (error) {
+    await supabase.storage
+      .from(CLINICAL_RECORD_ATTACHMENTS_BUCKET)
+      .remove([storagePath]);
+    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.uploadFailed);
+  }
+
+  await recordAuditLog({
+    actorUserId: psychologist.id,
+    action: "clinical_record_attachment.uploaded",
+    entityType: "clinical_record_attachment",
+    entityId: attachmentId,
+  });
+  revalidateRecords();
+  return actionSuccess();
+}
+
+export async function deleteClinicalRecordAttachment(
+  recordId: ClinicalRecordId,
+  attachmentId: ClinicalRecordAttachmentId,
+): Promise<ActionResult> {
+  const psychologist = await getAuthorizedPsychologist();
+  if (!psychologist) return actionFailure(UNAUTHORIZED_MESSAGE);
+  const parsedRecordId = attachmentIdSchema.safeParse(recordId);
+  const parsedAttachmentId = attachmentIdSchema.safeParse(attachmentId);
+  if (!parsedRecordId.success || !parsedAttachmentId.success) {
+    return actionFailure(INVALID_FORM_MESSAGE);
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clinical_record_attachments")
+    .delete()
+    .eq("id", parsedAttachmentId.data)
+    .eq("record_id", parsedRecordId.data)
+    .select("storage_path");
+  if (error) return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.saveFailed);
+  if (data.length === 0) {
+    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.notFound);
+  }
+
+  await supabase.storage
+    .from(CLINICAL_RECORD_ATTACHMENTS_BUCKET)
+    .remove(data.map(({ storage_path }) => storage_path));
+  await recordAuditLog({
+    actorUserId: psychologist.id,
+    action: "clinical_record_attachment.deleted",
+    entityType: "clinical_record_attachment",
+    entityId: parsedAttachmentId.data,
+  });
+  revalidateRecords();
+  return actionSuccess();
 }

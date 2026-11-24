@@ -6,7 +6,6 @@ import { useMemo } from "react";
 import { DataTable } from "@/components/data-table/data-table";
 import { createDataTableColumnHelper } from "@/components/data-table/data-table-features";
 import { useDataTable } from "@/components/data-table/use-data-table";
-import { StatusBadge } from "@/components/status-badge";
 import {
   Empty,
   EmptyDescription,
@@ -14,7 +13,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { CLINICAL_RECORD_KIND_LABELS } from "@/features/clinical-records/labels";
 import type { ClinicalRecordSummary } from "@/features/clinical-records/types";
 import { formatDate } from "@/lib/format";
 import { ROUTES } from "@/lib/routes";
@@ -34,7 +32,7 @@ export function RecordsTable({ records }: RecordsTableProps) {
     () =>
       columnHelper.columns([
         columnHelper.accessor("title", {
-          header: "Documento",
+          header: "Anotação",
           cell: ({ row }) => (
             <Link
               href={`${ROUTES.psychologist.records}/${row.original.id}`}
@@ -47,16 +45,18 @@ export function RecordsTable({ records }: RecordsTableProps) {
         columnHelper.accessor("patientName", {
           header: "Paciente",
         }),
-        columnHelper.accessor(
-          (record) => CLINICAL_RECORD_KIND_LABELS[record.kind],
-          {
-            id: "kind",
-            header: "Tipo",
-            cell: ({ getValue }) => (
-              <StatusBadge tone="neutral">{getValue()}</StatusBadge>
-            ),
-          },
-        ),
+        columnHelper.accessor((record) => record.sessionStartsAt ?? "", {
+          id: "session",
+          header: "Sessão",
+          enableGlobalFilter: false,
+          cell: ({ row }) => (
+            <span className="text-muted-foreground">
+              {row.original.sessionStartsAt
+                ? formatDate(row.original.sessionStartsAt)
+                : "—"}
+            </span>
+          ),
+        }),
         columnHelper.accessor("updatedAt", {
           header: "Atualizado em",
           enableGlobalFilter: false,
@@ -80,16 +80,16 @@ export function RecordsTable({ records }: RecordsTableProps) {
     <DataTable
       className="md:flex-1"
       table={table}
-      searchPlaceholder="Buscar por título, paciente ou tipo"
+      searchPlaceholder="Buscar por título ou paciente"
       emptyState={
         <Empty className="border border-dashed">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <FileText aria-hidden />
             </EmptyMedia>
-            <EmptyTitle>Nenhum documento ainda</EmptyTitle>
+            <EmptyTitle>Nenhuma anotação ainda</EmptyTitle>
             <EmptyDescription>
-              Registre a evolução das sessões ou emita laudos e declarações.
+              Registre as anotações das sessões, ligadas à agenda.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

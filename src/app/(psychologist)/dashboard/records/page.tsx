@@ -19,14 +19,14 @@ export default async function RecordsPage() {
     <div className="flex flex-1 flex-col md:h-svh md:flex-none md:overflow-hidden">
       <PageHeader
         title="Prontuários"
-        description="Evoluções, laudos, declarações e encaminhamentos. Conteúdo criptografado e visível só para você."
+        description="Anotações das sessões e documentos anexados. Conteúdo criptografado e visível só para você."
         actions={
           <Button
             nativeButton={false}
             render={<Link href={`${ROUTES.psychologist.records}/new`} />}
           >
             <FilePlus2 aria-hidden />
-            Novo documento
+            Nova anotação
           </Button>
         }
       />

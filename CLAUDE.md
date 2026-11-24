@@ -31,7 +31,7 @@ Stack: Next.js (App Router) · React · TypeScript · Tailwind · shadcn/ui (Bas
 - Todos os dados vêm do Supabase pelas funções de `src/features/<domain>/queries.ts`, com RLS separando os dados de cada profissional. Não existem dados de exemplo nem modo de teste.
 - Regras e transações no banco: criar uma sessão gera o pagamento (gatilho), cancelar deixa o pagamento sem cobrança e reagendar ou mudar a forma de pagamento recalcula o vencimento (`payment_due_date`). Criar sessões, cancelar, excluir paciente e registrar ou desfazer pagamento são funções RPC.
 - Sessões que já terminaram viram realizadas pela RPC `complete_finished_appointments`, chamada antes das leituras da agenda e dos pacientes.
-- Anexos de despesas ficam no bucket privado `expense-attachments`, no caminho `<psychologist_id>/<expense_id>/<attachment_id>`.
+- Anexos ficam em buckets privados, no caminho `<psychologist_id>/<id do item>/<attachment_id>`: `expense-attachments`, `study-note-attachments` e `clinical-record-attachments` (este com o arquivo criptografado, como o texto do prontuário). Regras de tipo e tamanho em `src/lib/attachments.ts` e a tela em `src/components/attachments`.
 - Autenticação pelo Supabase Auth: login, cadastro, Google, esqueci a senha e nova senha em `src/app/(auth)`, com o callback em `src/app/auth/callback`.
 
 ## Dados

@@ -5,7 +5,7 @@ import {
   listAppointmentsBetween,
   listAwaitingConfirmation,
 } from "@/features/appointments/queries";
-import { listLatestSessionNotes } from "@/features/clinical-records/queries";
+import { listSessionNotes } from "@/features/clinical-records/queries";
 import { listPatients } from "@/features/patients/queries";
 import {
   getPracticeSettings,
@@ -42,14 +42,14 @@ export default async function SchedulePage({
     patients,
     settings,
     rules,
-    latestSessionNotes,
+    sessionNotes,
   ] = await Promise.all([
     listAppointmentsBetween(firstDateKey, lastDateKey),
     listAwaitingConfirmation(),
     listPatients(),
     getPracticeSettings(),
     listAvailabilityRules(),
-    listLatestSessionNotes(),
+    listSessionNotes(),
   ]);
 
   const visibleDateKeys = getVisibleDateKeys(
@@ -112,7 +112,7 @@ export default async function SchedulePage({
           pixKey={settings.pixKey}
           practiceMeetingUrl={settings.meetingUrl}
           availability={availability}
-          latestSessionNotes={latestSessionNotes}
+          sessionNotes={sessionNotes}
         />
       </PageContent>
     </div>
