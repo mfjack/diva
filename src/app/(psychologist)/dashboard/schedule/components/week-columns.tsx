@@ -33,7 +33,10 @@ export function WeekColumns({
       {dateKeys.map((dateKey) => {
         const isToday = dateKey === todayKey;
         const dayAppointments = appointments
-          .filter(({ startsAt }) => isSameDateKey(startsAt, dateKey))
+          .filter(
+            ({ startsAt, status }) =>
+              status !== "cancelled" && isSameDateKey(startsAt, dateKey),
+          )
           .sort((first, second) =>
             first.startsAt.localeCompare(second.startsAt),
           );
