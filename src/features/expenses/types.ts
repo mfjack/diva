@@ -1,6 +1,6 @@
+import type { Attachment } from "@/lib/attachments";
 import type { Brand } from "@/lib/brand";
 import type { Cents } from "@/lib/money";
-import type { AttachmentContentType } from "./attachments";
 
 export const EXPENSE_CATEGORIES = [
   "supervision",
@@ -27,13 +27,7 @@ export type ExpenseId = Brand<string, "ExpenseId">;
 
 export type ExpenseAttachmentId = Brand<string, "ExpenseAttachmentId">;
 
-export type ExpenseAttachment = {
-  id: ExpenseAttachmentId;
-  fileName: string;
-  contentType: AttachmentContentType;
-  sizeBytes: number;
-  uploadedAt: string;
-};
+export type ExpenseAttachment = Attachment & { id: ExpenseAttachmentId };
 
 export type Expense = {
   id: ExpenseId;

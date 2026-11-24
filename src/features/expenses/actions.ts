@@ -13,17 +13,15 @@ import {
   actionFailure,
   actionSuccess,
 } from "@/lib/action-result";
+import {
+  ATTACHMENT_UPLOAD_MESSAGES,
+  readAttachmentUpload,
+} from "@/lib/attachment-upload";
 import { toDateKey } from "@/lib/dates";
 import { toCents } from "@/lib/money";
 import { ROUTES } from "@/lib/routes";
 import { emptyToNull } from "@/lib/strings";
 import { createClient } from "@/lib/supabase/server";
-import {
-  detectAttachmentType,
-  getAttachmentSizeError,
-  MAX_ATTACHMENTS_PER_EXPENSE,
-  sanitizeAttachmentName,
-} from "./attachments";
 import { EXPENSE_ACTION_MESSAGES } from "./messages";
 import { getExpense, hasExpensePayment } from "./queries";
 import { canEndRecurrence, isOccurrenceOf } from "./recurrence";
@@ -144,19 +142,11 @@ export async function uploadExpenseAttachment(
 ): Promise<ActionResult> {
   const lookup = await findAuthorizedExpense(expenseId);
   if (!lookup.isFound) return lookup.failure;
-  const file = formData.get("file");
-  if (!(file instanceof File)) return actionFailure(INVALID_FORM_MESSAGE);
-  if (lookup.entity.attachments.length >= MAX_ATTACHMENTS_PER_EXPENSE) {
-    return actionFailure(EXPENSE_ACTION_MESSAGES.tooManyAttachments);
-  }
-  const sizeError = getAttachmentSizeError(file.size);
-  if (sizeError) return actionFailure(sizeError);
-
-  const content = new Uint8Array(await file.arrayBuffer());
-  const contentType = detectAttachmentType(content);
-  if (!contentType) {
-    return actionFailure(EXPENSE_ACTION_MESSAGES.unsupportedAttachment);
-  }
+  const upload = await readAttachmentUpload(
+    formData,
+    lookup.entity.attachments.length,
+  );
+  if (!upload.isValid) return actionFailure(upload.message);
 
   const attachmentId = crypto.randomUUID() as ExpenseAttachmentId;
   const storagePath = getExpenseAttachmentPath(
@@ -167,9 +157,12 @@ export async function uploadExpenseAttachment(
   const supabase = await createClient();
   const { error: uploadError } = await supabase.storage
     .from(EXPENSE_ATTACHMENTS_BUCKET)
-    .upload(storagePath, content, { contentType, upsert: false });
+    .upload(storagePath, upload.content, {
+      contentType: upload.contentType,
+      upsert: false,
+    });
   if (uploadError) {
-    return actionFailure(EXPENSE_ACTION_MESSAGES.uploadFailed);
+    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.uploadFailed);
   }
 
   const { error } = await supabase.from("expense_attachments").insert({
@@ -177,15 +170,15 @@ export async function uploadExpenseAttachment(
     expense_id: lookup.entity.id,
     psychologist_id: lookup.psychologist.id,
     storage_path: storagePath,
-    file_name: sanitizeAttachmentName(file.name),
-    content_type: contentType,
-    size_bytes: file.size,
+    file_name: upload.fileName,
+    content_type: upload.contentType,
+    size_bytes: upload.sizeBytes,
   });
   if (error) {
     await supabase.storage
       .from(EXPENSE_ATTACHMENTS_BUCKET)
       .remove([storagePath]);
-    return actionFailure(EXPENSE_ACTION_MESSAGES.uploadFailed);
+    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.uploadFailed);
   }
 
   revalidateFinance();
@@ -210,7 +203,7 @@ export async function deleteExpenseAttachment(
     .select("storage_path");
   if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
   if (data.length === 0) {
-    return actionFailure(EXPENSE_ACTION_MESSAGES.attachmentNotFound);
+    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.notFound);
   }
 
   await supabase.storage

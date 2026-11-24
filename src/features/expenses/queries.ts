@@ -6,6 +6,11 @@ import { getCurrentUser } from "@/features/auth/queries";
 import { toDateKey } from "@/lib/dates";
 import type { Cents } from "@/lib/money";
 import type { MonthRange } from "@/lib/months";
+import {
+  ATTACHMENT_COLUMNS,
+  sortAttachments,
+  toAttachment,
+} from "@/lib/supabase/attachment-rows";
 import { assertNoDatabaseError } from "@/lib/supabase/errors";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -33,7 +38,7 @@ const EXPENSE_COLUMNS = `
   installment_count,
   notes,
   created_at,
-  expense_attachments (id, file_name, content_type, size_bytes, created_at)
+  expense_attachments (${ATTACHMENT_COLUMNS})
 `;
 
 const entityIdSchema = z.uuid();
@@ -43,18 +48,6 @@ function selectExpenses(supabase: SupabaseServerClient) {
 }
 
 type ExpenseRow = QueryData<ReturnType<typeof selectExpenses>>[number];
-
-type AttachmentRow = ExpenseRow["expense_attachments"][number];
-
-function toAttachment(row: AttachmentRow): ExpenseAttachment {
-  return {
-    id: row.id as ExpenseAttachmentId,
-    fileName: row.file_name,
-    contentType: row.content_type as ExpenseAttachment["contentType"],
-    sizeBytes: row.size_bytes,
-    uploadedAt: row.created_at,
-  };
-}
 
 function toExpense(row: ExpenseRow): Expense {
   return {
@@ -67,11 +60,9 @@ function toExpense(row: ExpenseRow): Expense {
     endsOn: row.ends_on,
     installmentCount: row.installment_count,
     notes: row.notes,
-    attachments: row.expense_attachments
-      .map(toAttachment)
-      .sort((first, second) =>
-        first.uploadedAt.localeCompare(second.uploadedAt),
-      ),
+    attachments: sortAttachments(
+      row.expense_attachments.map(toAttachment<ExpenseAttachmentId>),
+    ),
     createdAt: row.created_at,
   };
 }
@@ -148,10 +139,13 @@ export async function getExpenseAttachmentFile(attachmentId: string): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("expense_attachments")
-    .select("id, file_name, content_type, size_bytes, created_at, storage_path")
+    .select(`${ATTACHMENT_COLUMNS}, storage_path`)
     .eq("id", parsedId.data)
     .maybeSingle();
   assertNoDatabaseError(error);
   if (!data) return null;
-  return { attachment: toAttachment(data), storagePath: data.storage_path };
+  return {
+    attachment: toAttachment<ExpenseAttachmentId>(data),
+    storagePath: data.storage_path,
+  };
 }

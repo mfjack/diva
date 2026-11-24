@@ -1,65 +1,18 @@
 "use client";
 
-import { FileText, Paperclip, X } from "lucide-react";
+import { Paperclip } from "lucide-react";
 import { type ChangeEvent, useId, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AttachmentRow } from "@/components/attachments/attachment-row";
 import { Button } from "@/components/ui/button";
-import { buildExpenseAttachmentRoute } from "@/lib/routes";
 import {
   ATTACHMENT_ACCEPT,
-  formatFileSize,
   getAttachmentSizeError,
-  MAX_ATTACHMENTS_PER_EXPENSE,
-} from "../attachments";
+  MAX_ATTACHMENTS_PER_ITEM,
+} from "@/lib/attachments";
+import { buildExpenseAttachmentRoute } from "@/lib/routes";
 import { useDeleteExpenseAttachmentMutation } from "../hooks/use-delete-expense-attachment-mutation";
 import type { ExpenseAttachment, ExpenseId } from "../types";
-
-type AttachmentRowProps = {
-  name: string;
-  sizeBytes: number;
-  href?: string;
-  isRemoving?: boolean;
-  onRemove: () => void;
-};
-
-function AttachmentRow({
-  name,
-  sizeBytes,
-  href,
-  isRemoving = false,
-  onRemove,
-}: AttachmentRowProps) {
-  return (
-    <li className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-      <FileText aria-hidden className="size-4 shrink-0 text-primary" />
-      {href ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="min-w-0 flex-1 truncate underline-offset-4 hover:underline"
-        >
-          {name}
-        </a>
-      ) : (
-        <span className="min-w-0 flex-1 truncate">{name}</span>
-      )}
-      <span className="shrink-0 text-muted-foreground text-xs">
-        {formatFileSize(sizeBytes)}
-      </span>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label={`Remover ${name}`}
-        disabled={isRemoving}
-        onClick={onRemove}
-      >
-        <X aria-hidden />
-      </Button>
-    </li>
-  );
-}
 
 type ExpenseAttachmentsInputProps = {
   expenseId: ExpenseId | null;
@@ -82,7 +35,7 @@ export function ExpenseAttachmentsInput({
     ({ id }) => !removedIds.includes(id),
   );
   const totalCount = savedAttachments.length + pendingFiles.length;
-  const canAddMore = totalCount < MAX_ATTACHMENTS_PER_EXPENSE;
+  const canAddMore = totalCount < MAX_ATTACHMENTS_PER_ITEM;
 
   function handleFilesSelected(event: ChangeEvent<HTMLInputElement>) {
     const selectedFiles = Array.from(event.target.files ?? []);
@@ -92,10 +45,10 @@ export function ExpenseAttachmentsInput({
       if (sizeError) toast.error(`${file.name}: ${sizeError}`);
       return sizeError === null;
     });
-    const availableSlots = MAX_ATTACHMENTS_PER_EXPENSE - totalCount;
+    const availableSlots = MAX_ATTACHMENTS_PER_ITEM - totalCount;
     if (acceptedFiles.length > availableSlots) {
       toast.error(
-        `Cada despesa aceita até ${MAX_ATTACHMENTS_PER_EXPENSE} anexos.`,
+        `Cada despesa aceita até ${MAX_ATTACHMENTS_PER_ITEM} anexos.`,
       );
     }
     onPendingFilesChange([

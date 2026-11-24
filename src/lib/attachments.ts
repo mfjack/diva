@@ -1,5 +1,5 @@
 export const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024;
-export const MAX_ATTACHMENTS_PER_EXPENSE = 5;
+export const MAX_ATTACHMENTS_PER_ITEM = 5;
 const MAX_ATTACHMENT_NAME_LENGTH = 120;
 
 const ATTACHMENT_CONTENT_TYPES = [
@@ -12,6 +12,20 @@ const ATTACHMENT_CONTENT_TYPES = [
 export type AttachmentContentType = (typeof ATTACHMENT_CONTENT_TYPES)[number];
 
 export const ATTACHMENT_ACCEPT = ATTACHMENT_CONTENT_TYPES.join(",");
+
+export type Attachment = {
+  id: string;
+  fileName: string;
+  contentType: AttachmentContentType;
+  sizeBytes: number;
+  uploadedAt: string;
+};
+
+export function isAttachmentContentType(
+  value: string,
+): value is AttachmentContentType {
+  return ATTACHMENT_CONTENT_TYPES.some((contentType) => contentType === value);
+}
 
 const BYTES_PER_KILOBYTE = 1024;
 
