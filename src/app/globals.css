@@ -141,6 +141,10 @@
   }
   html {
     @apply font-sans;
+
+    @media (width >= 48rem) {
+      font-size: 93.75%;
+    }
   }
   :where(
     button,
