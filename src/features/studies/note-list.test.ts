@@ -13,11 +13,12 @@ function createNote(overrides: Partial<StudyNote>): StudyNote {
   return {
     id: "note-1" as StudyNoteId,
     title: "Sem título",
-    kind: "note",
+    kind: "Anotação",
     content: EMPTY_RICH_TEXT,
     plainText: "",
     tags: [],
     source: null,
+    attachments: [],
     isPinned: false,
     createdAt: "2026-11-01T12:00:00.000Z",
     updatedAt: "2026-11-01T12:00:00.000Z",
@@ -29,13 +30,13 @@ const notes = [
   createNote({
     id: "old" as StudyNoteId,
     title: "Reflexão sobre vínculo",
-    kind: "reflection",
+    kind: "Reflexão",
     updatedAt: "2026-11-01T12:00:00.000Z",
   }),
   createNote({
     id: "recent" as StudyNoteId,
     title: "Luto",
-    kind: "reading",
+    kind: "Leitura",
     tags: ["luto"],
     plainText: "Modelo de tarefas do luto de Worden",
     updatedAt: "2026-11-10T12:00:00.000Z",
@@ -43,7 +44,7 @@ const notes = [
   createNote({
     id: "pinned" as StudyNoteId,
     title: "Supervisão de casos",
-    kind: "supervision",
+    kind: "Supervisão",
     tags: ["tcc"],
     isPinned: true,
     updatedAt: "2026-10-01T12:00:00.000Z",
@@ -72,7 +73,7 @@ describe("listStudyNoteSummaries", () => {
 
   it("filters by kind and tag", () => {
     expect(
-      listStudyNoteSummaries(notes, { ...NO_FILTERS, kind: "reading" }).map(
+      listStudyNoteSummaries(notes, { ...NO_FILTERS, kind: "Leitura" }).map(
         ({ id }) => id,
       ),
     ).toEqual(["recent"]);

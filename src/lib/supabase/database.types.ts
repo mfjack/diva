@@ -308,6 +308,54 @@ export type Database = {
           },
         ]
       }
+      clinical_record_attachments: {
+        Row: {
+          content_type: string
+          created_at: string
+          file_name: string
+          id: string
+          psychologist_id: string
+          record_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          file_name: string
+          id?: string
+          psychologist_id: string
+          record_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          psychologist_id?: string
+          record_id?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinical_record_attachments_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinical_record_attachments_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "clinical_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinical_records: {
         Row: {
           appointment_id: string | null
@@ -828,6 +876,54 @@ export type Database = {
           },
         ]
       }
+      study_note_attachments: {
+        Row: {
+          content_type: string
+          created_at: string
+          file_name: string
+          id: string
+          note_id: string
+          psychologist_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          file_name: string
+          id?: string
+          note_id: string
+          psychologist_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          note_id?: string
+          psychologist_id?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_note_attachments_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "study_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_note_attachments_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_notes: {
         Row: {
           content: Json
@@ -835,7 +931,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           is_pinned: boolean
-          kind: Database["public"]["Enums"]["study_note_kind"]
+          kind: string
           plain_text: string
           psychologist_id: string
           source_author: string | null
@@ -851,7 +947,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_pinned?: boolean
-          kind?: Database["public"]["Enums"]["study_note_kind"]
+          kind?: string
           plain_text?: string
           psychologist_id: string
           source_author?: string | null
@@ -867,7 +963,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_pinned?: boolean
-          kind?: Database["public"]["Enums"]["study_note_kind"]
+          kind?: string
           plain_text?: string
           psychologist_id?: string
           source_author?: string | null
@@ -1051,12 +1147,6 @@ export type Database = {
       payment_plan: "per_session" | "monthly_before" | "monthly_after"
       payment_status: "pending" | "paid" | "waived" | "refunded"
       session_repeat: "weekly" | "biweekly"
-      study_note_kind:
-        | "note"
-        | "reflection"
-        | "reading"
-        | "supervision"
-        | "course"
       user_role: "psychologist" | "patient"
     }
     CompositeTypes: {
@@ -1224,13 +1314,6 @@ export const Constants = {
       payment_plan: ["per_session", "monthly_before", "monthly_after"],
       payment_status: ["pending", "paid", "waived", "refunded"],
       session_repeat: ["weekly", "biweekly"],
-      study_note_kind: [
-        "note",
-        "reflection",
-        "reading",
-        "supervision",
-        "course",
-      ],
       user_role: ["psychologist", "patient"],
     },
   },

@@ -12,6 +12,7 @@ import {
 import {
   getStudyNote,
   hasStudyNotes,
+  listStudyKinds,
   listStudyNotes,
   listStudyTags,
 } from "@/features/studies/queries";
@@ -41,9 +42,10 @@ export default async function StudiesPage({
   } = await loadStudyNotesSearchParams(searchParams);
   const filters = { search: q, kind, tag };
 
-  const [notes, tags, selectedNote, hasNotes] = await Promise.all([
+  const [notes, tags, kinds, selectedNote, hasNotes] = await Promise.all([
     listStudyNotes(filters),
     listStudyTags(),
+    listStudyKinds(),
     noteId ? getStudyNote(noteId) : null,
     hasStudyNotes(),
   ]);
@@ -103,7 +105,7 @@ export default async function StudiesPage({
             selectedNote && "hidden lg:flex",
           )}
         >
-          <StudyNotesFilters tags={tags} />
+          <StudyNotesFilters kinds={kinds} tags={tags} />
           <StudyNotesList
             notes={notes}
             selectedNoteId={selectedNote?.id ?? null}
@@ -120,6 +122,7 @@ export default async function StudiesPage({
             <StudyNoteEditor
               key={selectedNote.id}
               note={selectedNote}
+              kinds={kinds}
               tagSuggestions={tags}
               listHref={listHref}
             />

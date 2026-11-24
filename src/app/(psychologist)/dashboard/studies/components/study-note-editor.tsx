@@ -5,28 +5,35 @@ import { ArrowLeft, ChevronDown, FileDown, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { AttachmentsPanel } from "@/components/attachments/attachments-panel";
 import { RichTextField } from "@/components/form/rich-text-field";
-import { SelectField } from "@/components/form/select-field";
 import { TagsField } from "@/components/form/tags-field";
 import { TextField } from "@/components/form/text-field";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useDeleteStudyNoteAttachmentMutation } from "@/features/studies/hooks/use-delete-study-note-attachment-mutation";
 import { useSaveStudyNoteMutation } from "@/features/studies/hooks/use-save-study-note-mutation";
-import {
-  STUDY_NOTE_KIND_OPTIONS,
-  UNTITLED_STUDY_NOTE,
-} from "@/features/studies/labels";
+import { useUploadStudyNoteAttachmentMutation } from "@/features/studies/hooks/use-upload-study-note-attachment-mutation";
+import { UNTITLED_STUDY_NOTE } from "@/features/studies/labels";
 import {
   STUDY_NOTE_MAX_TAGS,
   type StudyNoteInput,
   studyNoteSchema,
 } from "@/features/studies/schemas";
 import { toStudyNoteInput } from "@/features/studies/to-study-note-input";
-import type { StudyNote } from "@/features/studies/types";
+import type {
+  StudyNote,
+  StudyNoteAttachmentId,
+} from "@/features/studies/types";
 import { useAutosave } from "@/hooks/use-autosave";
 import { formatTime } from "@/lib/format";
-import { buildStudyNotePdfRoute } from "@/lib/routes";
+import {
+  buildStudyNoteAttachmentRoute,
+  buildStudyNotePdfRoute,
+} from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { StudyKindField } from "./study-kind-field";
 
 type SaveStatusProps = {
   isSaving: boolean;
@@ -54,15 +61,19 @@ function SaveStatus({ isSaving, hasError, savedAt }: SaveStatusProps) {
 
 type StudyNoteEditorProps = {
   note: StudyNote;
+  kinds: readonly string[];
   tagSuggestions: readonly string[];
   listHref: string;
 };
 
 export function StudyNoteEditor({
   note,
+  kinds,
   tagSuggestions,
   listHref,
 }: StudyNoteEditorProps) {
+  const uploadAttachmentMutation = useUploadStudyNoteAttachmentMutation();
+  const deleteAttachmentMutation = useDeleteStudyNoteAttachmentMutation();
   const [savedAt, setSavedAt] = useState(note.updatedAt);
   const [isPreparingPdf, setIsPreparingPdf] = useState(false);
   const [isSourceOpen, setIsSourceOpen] = useState(note.source !== null);
@@ -81,6 +92,26 @@ export function StudyNoteEditor({
     }
     setIsPreparingPdf(false);
     window.location.assign(buildStudyNotePdfRoute(note.id));
+  }
+
+  function handleUploadAttachment(file: File) {
+    uploadAttachmentMutation.mutate(
+      { noteId: note.id, file },
+      {
+        onSuccess: () => toast.success("Documento anexado."),
+        onError: (error) => toast.error(error.message),
+      },
+    );
+  }
+
+  function handleRemoveAttachment(attachmentId: string) {
+    deleteAttachmentMutation.mutate(
+      {
+        noteId: note.id,
+        attachmentId: attachmentId as StudyNoteAttachmentId,
+      },
+      { onError: (error) => toast.error(error.message) },
+    );
   }
 
   useAutosave(form, (input) =>
@@ -129,12 +160,7 @@ export function StudyNoteEditor({
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField
-          control={form.control}
-          name="kind"
-          label="Tipo"
-          options={STUDY_NOTE_KIND_OPTIONS}
-        />
+        <StudyKindField form={form} kinds={kinds} />
         <TagsField
           control={form.control}
           name="tags"
@@ -197,6 +223,20 @@ export function StudyNoteEditor({
         label="Anotação"
         isLabelHidden
         placeholder="Escreva suas ideias, resumos e reflexões…"
+      />
+
+      <AttachmentsPanel
+        title="Documentos"
+        attachments={note.attachments}
+        getAttachmentHref={buildStudyNoteAttachmentRoute}
+        isUploading={uploadAttachmentMutation.isPending}
+        removingAttachmentId={
+          deleteAttachmentMutation.isPending
+            ? (deleteAttachmentMutation.variables?.attachmentId ?? null)
+            : null
+        }
+        onUpload={handleUploadAttachment}
+        onRemove={handleRemoveAttachment}
       />
 
       <p className="flex items-center gap-2 text-muted-foreground text-xs">

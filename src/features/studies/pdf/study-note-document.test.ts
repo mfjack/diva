@@ -5,7 +5,8 @@ import { renderStudyNotePdf } from "./study-note-document";
 const note: StudyNote = {
   id: "note-1" as StudyNoteId,
   title: "Reflexão sobre vínculo",
-  kind: "reflection",
+  kind: "Reflexão",
+  attachments: [],
   content: {
     type: "doc",
     content: [

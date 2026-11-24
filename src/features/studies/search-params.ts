@@ -1,15 +1,9 @@
-import {
-  createLoader,
-  createSerializer,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs/server";
-import { STUDY_NOTE_KINDS } from "./types";
+import { createLoader, createSerializer, parseAsString } from "nuqs/server";
 
 export const studyNotesSearchParams = {
   note: parseAsString,
   q: parseAsString.withDefault(""),
-  kind: parseAsStringLiteral(STUDY_NOTE_KINDS),
+  kind: parseAsString,
   tag: parseAsString,
 };
 

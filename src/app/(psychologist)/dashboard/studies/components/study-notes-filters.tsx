@@ -3,21 +3,17 @@
 import { debounce, useQueryStates } from "nuqs";
 import { FilterSelect } from "@/components/filter-select";
 import { SearchInput } from "@/components/search-input";
-import { STUDY_NOTE_KIND_OPTIONS } from "@/features/studies/labels";
+import { toStudyNoteKindOptions } from "@/features/studies/labels";
 import { studyNotesSearchParams } from "@/features/studies/search-params";
-import { STUDY_NOTE_KINDS, type StudyNoteKind } from "@/features/studies/types";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-function isStudyNoteKind(value: string | null): value is StudyNoteKind {
-  return STUDY_NOTE_KINDS.some((kind) => kind === value);
-}
-
 type StudyNotesFiltersProps = {
+  kinds: readonly string[];
   tags: readonly string[];
 };
 
-export function StudyNotesFilters({ tags }: StudyNotesFiltersProps) {
+export function StudyNotesFilters({ kinds, tags }: StudyNotesFiltersProps) {
   const [{ q, kind, tag }, setFilters] = useQueryStates(
     studyNotesSearchParams,
     { shallow: false },
@@ -35,7 +31,7 @@ export function StudyNotesFilters({ tags }: StudyNotesFiltersProps) {
   }
 
   function handleKindChange(value: string | null) {
-    setFilters({ kind: isStudyNoteKind(value) ? value : null });
+    setFilters({ kind: value });
   }
 
   function handleTagChange(value: string | null) {
@@ -54,7 +50,7 @@ export function StudyNotesFilters({ tags }: StudyNotesFiltersProps) {
           label="Filtrar por tipo"
           allLabel="Todos os tipos"
           value={kind}
-          options={STUDY_NOTE_KIND_OPTIONS}
+          options={toStudyNoteKindOptions(kinds)}
           onChange={handleKindChange}
         />
         <FilterSelect

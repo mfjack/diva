@@ -4,28 +4,24 @@ import {
   Lightbulb,
   type LucideIcon,
   NotebookPen,
+  Tag,
   UsersRound,
 } from "lucide-react";
-import type { StudyNoteKind } from "./types";
 
-export const STUDY_NOTE_KIND_LABELS = {
-  note: "Anotação",
-  reflection: "Reflexão",
-  reading: "Leitura",
-  supervision: "Supervisão",
-  course: "Curso/aula",
-} as const satisfies Record<StudyNoteKind, string>;
+const DEFAULT_KIND_ICONS: Readonly<Record<string, LucideIcon>> = {
+  Anotação: NotebookPen,
+  Reflexão: Lightbulb,
+  Leitura: BookOpen,
+  Supervisão: UsersRound,
+  "Curso/aula": GraduationCap,
+};
 
-export const STUDY_NOTE_KIND_ICONS = {
-  note: NotebookPen,
-  reflection: Lightbulb,
-  reading: BookOpen,
-  supervision: UsersRound,
-  course: GraduationCap,
-} as const satisfies Record<StudyNoteKind, LucideIcon>;
+export function getStudyNoteKindIcon(kind: string): LucideIcon {
+  return DEFAULT_KIND_ICONS[kind] ?? Tag;
+}
 
-export const STUDY_NOTE_KIND_OPTIONS = Object.entries(
-  STUDY_NOTE_KIND_LABELS,
-).map(([value, label]) => ({ value, label }));
+export function toStudyNoteKindOptions(kinds: readonly string[]) {
+  return kinds.map((kind) => ({ value: kind, label: kind }));
+}
 
 export const UNTITLED_STUDY_NOTE = "Sem título";

@@ -4,7 +4,7 @@ import { type StudyNoteInput, studyNoteSchema } from "./schemas";
 
 const validNote: StudyNoteInput = {
   title: "Luto em adultos",
-  kind: "reading",
+  kind: "Leitura",
   content: EMPTY_RICH_TEXT,
   tags: ["luto", "adultos"],
   sourceTitle: "Aconselhamento do luto",

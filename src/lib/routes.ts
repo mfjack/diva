@@ -33,8 +33,8 @@ export const LOGIN_ERROR_CODES = {
   accessDenied: "access-denied",
 } as const;
 
-export function buildNewSessionNoteRoute(patientId: string): string {
-  const searchParams = new URLSearchParams({ patientId, kind: "session_note" });
+export function buildNewSessionNoteRoute(appointmentId: string): string {
+  const searchParams = new URLSearchParams({ appointmentId });
   return `${ROUTES.psychologist.records}/new?${searchParams.toString()}`;
 }
 
@@ -44,4 +44,14 @@ export function buildExpenseAttachmentRoute(attachmentId: string): string {
 
 export function buildStudyNotePdfRoute(noteId: string): string {
   return `${ROUTES.psychologist.studies}/${encodeURIComponent(noteId)}/pdf`;
+}
+
+export function buildStudyNoteAttachmentRoute(attachmentId: string): string {
+  return `${ROUTES.psychologist.studies}/attachments/${encodeURIComponent(attachmentId)}`;
+}
+
+export function buildClinicalRecordAttachmentRoute(
+  attachmentId: string,
+): string {
+  return `${ROUTES.psychologist.records}/attachments/${encodeURIComponent(attachmentId)}`;
 }

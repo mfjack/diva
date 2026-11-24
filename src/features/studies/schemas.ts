@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { richTextDocumentSchema } from "@/lib/rich-text";
-import { STUDY_NOTE_KINDS } from "./types";
 
 const STUDY_NOTE_TAG_MAX_LENGTH = 40;
+const STUDY_NOTE_KIND_MAX_LENGTH = 40;
 export const STUDY_NOTE_MAX_TAGS = 10;
 
 const tagSchema = z
@@ -18,7 +18,11 @@ const optionalUrlSchema = z.union([
 
 export const studyNoteSchema = z.object({
   title: z.string().trim().max(160, "Título muito longo."),
-  kind: z.enum(STUDY_NOTE_KINDS),
+  kind: z
+    .string()
+    .trim()
+    .min(1, "Informe o tipo.")
+    .max(STUDY_NOTE_KIND_MAX_LENGTH, "Tipo muito longo."),
   content: richTextDocumentSchema,
   tags: z
     .array(tagSchema)

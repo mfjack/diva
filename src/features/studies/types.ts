@@ -1,17 +1,20 @@
+import type { Attachment } from "@/lib/attachments";
 import type { Brand } from "@/lib/brand";
 import type { RichTextDocument } from "@/lib/rich-text";
 
-export const STUDY_NOTE_KINDS = [
-  "note",
-  "reflection",
-  "reading",
-  "supervision",
-  "course",
+export const DEFAULT_STUDY_NOTE_KINDS = [
+  "Anotação",
+  "Reflexão",
+  "Leitura",
+  "Supervisão",
+  "Curso/aula",
 ] as const;
 
-export type StudyNoteKind = (typeof STUDY_NOTE_KINDS)[number];
-
 export type StudyNoteId = Brand<string, "StudyNoteId">;
+
+export type StudyNoteAttachmentId = Brand<string, "StudyNoteAttachmentId">;
+
+export type StudyNoteAttachment = Attachment & { id: StudyNoteAttachmentId };
 
 export type StudyNoteSource = {
   title: string;
@@ -22,7 +25,7 @@ export type StudyNoteSource = {
 export type StudyNote = {
   id: StudyNoteId;
   title: string;
-  kind: StudyNoteKind;
+  kind: string;
   content: RichTextDocument;
   plainText: string;
   tags: string[];
@@ -30,14 +33,18 @@ export type StudyNote = {
   isPinned: boolean;
   createdAt: string;
   updatedAt: string;
+  attachments: StudyNoteAttachment[];
 };
 
-export type StudyNoteSummary = Omit<StudyNote, "content" | "plainText"> & {
+export type StudyNoteSummary = Omit<
+  StudyNote,
+  "content" | "plainText" | "attachments"
+> & {
   excerpt: string;
 };
 
 export type StudyNoteFilters = {
   search: string;
-  kind: StudyNoteKind | null;
+  kind: string | null;
   tag: string | null;
 };

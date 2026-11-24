@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
-  STUDY_NOTE_KIND_ICONS,
-  STUDY_NOTE_KIND_LABELS,
+  getStudyNoteKindIcon,
   UNTITLED_STUDY_NOTE,
 } from "@/features/studies/labels";
 import type { StudyNoteSummary } from "@/features/studies/types";
@@ -33,7 +32,7 @@ export function StudyNotesList({
   return (
     <ul className="flex flex-col gap-1.5">
       {notes.map((note) => {
-        const Icon = STUDY_NOTE_KIND_ICONS[note.kind];
+        const Icon = getStudyNoteKindIcon(note.kind);
         const isSelected = note.id === selectedNoteId;
         return (
           <li
@@ -50,7 +49,7 @@ export function StudyNotesList({
             >
               <span className="flex items-center gap-2">
                 <Icon
-                  aria-label={STUDY_NOTE_KIND_LABELS[note.kind]}
+                  aria-label={note.kind}
                   className="size-4 shrink-0 text-primary"
                 />
                 <span className="min-w-0 flex-1 truncate font-medium text-sm">

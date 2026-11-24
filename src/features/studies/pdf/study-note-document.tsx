@@ -13,7 +13,7 @@ import {
 import type { ReactNode } from "react";
 import { formatDate } from "@/lib/format";
 import type { RichTextNode } from "@/lib/rich-text";
-import { STUDY_NOTE_KIND_LABELS, UNTITLED_STUDY_NOTE } from "../labels";
+import { UNTITLED_STUDY_NOTE } from "../labels";
 import type { StudyNote } from "../types";
 
 const COLORS = {
@@ -198,7 +198,7 @@ function renderBlocks(
 function StudyNoteDocument({ note }: { note: StudyNote }) {
   const title = note.title || UNTITLED_STUDY_NOTE;
   const details = [
-    STUDY_NOTE_KIND_LABELS[note.kind],
+    note.kind,
     `Atualizada em ${formatDate(note.updatedAt)}`,
     ...note.tags,
   ].join("  ·  ");
