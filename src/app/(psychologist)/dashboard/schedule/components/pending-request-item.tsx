@@ -32,7 +32,7 @@ export function PendingRequestItem({
     <li className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
       <div className="flex items-start gap-3">
         <Avatar className="size-9">
-          <AvatarFallback className="bg-accent font-medium text-accent-foreground text-xs">
+          <AvatarFallback className="bg-accent font-medium text-accent-foreground text-sm">
             {getInitials(appointment.patientName)}
           </AvatarFallback>
         </Avatar>

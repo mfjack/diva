@@ -308,6 +308,50 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          notes: string | null
+          psychologist_id: string
+          series_id: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          notes?: string | null
+          psychologist_id: string
+          series_id?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          notes?: string | null
+          psychologist_id?: string
+          series_id?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_psychologist_id_fkey"
+            columns: ["psychologist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinical_record_attachments: {
         Row: {
           content_type: string
@@ -1072,7 +1116,11 @@ export type Database = {
     Functions: {
       accept_terms: { Args: { p_version: string }; Returns: undefined }
       cancel_appointments: {
-        Args: { p_cancellations: Json; p_reason: string }
+        Args: {
+          p_cancellations: Json
+          p_cancelled_by?: Database["public"]["Enums"]["cancellation_actor"]
+          p_reason: string
+        }
         Returns: number
       }
       complete_finished_appointments: { Args: never; Returns: undefined }

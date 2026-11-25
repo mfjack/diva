@@ -1,23 +1,33 @@
 import type { CSSProperties } from "react";
 import type { Appointment, AppointmentId } from "@/features/appointments/types";
-import { isSameDateKey, toDateKey } from "@/lib/dates";
+import type {
+  CalendarEvent,
+  CalendarEventId,
+} from "@/features/calendar-events/types";
+import { toDateKey } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import { listDayItems } from "../schedule-layout";
 import { AppointmentCard } from "./appointment-card";
+import { CalendarEventCard } from "./calendar-event-card";
 import { DayHeading, getDayLabel } from "./day-heading";
 
 type WeekColumnsProps = {
   dateKeys: readonly string[];
   appointments: readonly Appointment[];
+  events: readonly CalendarEvent[];
   now: string;
   onSelect: (appointmentId: AppointmentId) => void;
+  onSelectEvent: (eventId: CalendarEventId) => void;
   className?: string;
 };
 
 export function WeekColumns({
   dateKeys,
   appointments,
+  events,
   now,
   onSelect,
+  onSelectEvent,
   className,
 }: WeekColumnsProps) {
   const todayKey = toDateKey(now);
@@ -32,14 +42,7 @@ export function WeekColumns({
     >
       {dateKeys.map((dateKey) => {
         const isToday = dateKey === todayKey;
-        const dayAppointments = appointments
-          .filter(
-            ({ startsAt, status }) =>
-              status !== "cancelled" && isSameDateKey(startsAt, dateKey),
-          )
-          .sort((first, second) =>
-            first.startsAt.localeCompare(second.startsAt),
-          );
+        const dayItems = listDayItems(dateKey, appointments, events);
 
         return (
           <section
@@ -55,18 +58,26 @@ export function WeekColumns({
             >
               <DayHeading dateKey={dateKey} isToday={isToday} />
             </header>
-            {dayAppointments.length > 0 ? (
+            {dayItems.length > 0 ? (
               <div className="flex flex-col gap-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-                {dayAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    onSelect={onSelect}
-                  />
-                ))}
+                {dayItems.map((item) =>
+                  item.kind === "session" ? (
+                    <AppointmentCard
+                      key={item.appointment.id}
+                      appointment={item.appointment}
+                      onSelect={onSelect}
+                    />
+                  ) : (
+                    <CalendarEventCard
+                      key={item.event.id}
+                      event={item.event}
+                      onSelect={onSelectEvent}
+                    />
+                  ),
+                )}
               </div>
             ) : (
-              <p className="py-2 text-muted-foreground text-xs">Sem sessões</p>
+              <p className="py-2 text-muted-foreground text-sm">Dia livre</p>
             )}
           </section>
         );

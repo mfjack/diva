@@ -1,30 +1,15 @@
-import { cva } from "class-variance-authority";
 import { MapPin, Video } from "lucide-react";
 import { AppointmentStatusBadge } from "@/features/appointments/components/appointment-status-badge";
 import { APPOINTMENT_MODALITY_LABELS } from "@/features/appointments/labels";
-import type {
-  Appointment,
-  AppointmentId,
-  AppointmentStatus,
-} from "@/features/appointments/types";
+import type { Appointment, AppointmentId } from "@/features/appointments/types";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-const appointmentCardVariants = cva(
-  "flex w-full flex-col gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-ring",
-  {
-    variants: {
-      status: {
-        scheduled: "border-warning/20 bg-warning/5 hover:border-warning",
-        confirmed: "border-primary/15 bg-primary/4 hover:border-primary",
-        completed: "border-success/20 bg-success/5 hover:border-success",
-        no_show:
-          "border-destructive/15 bg-destructive/4 hover:border-destructive",
-        cancelled: "bg-muted/40 hover:border-muted-foreground",
-      } satisfies Record<AppointmentStatus, string>,
-    },
-  },
-);
+import { APPOINTMENT_STATUS_SURFACE_CLASS_NAMES } from "./appointment-status-styles";
+import {
+  SCHEDULE_CARD_BADGE_CLASS_NAME,
+  SCHEDULE_CARD_CLASS_NAME,
+  SCHEDULE_CARD_TITLE_CLASS_NAME,
+} from "./schedule-card-styles";
 
 type AppointmentCardProps = {
   appointment: Appointment;
@@ -46,9 +31,13 @@ export function AppointmentCard({
     <button
       type="button"
       onClick={handleClick}
-      className={appointmentCardVariants({ status: appointment.status })}
+      title={appointment.patientName}
+      className={cn(
+        SCHEDULE_CARD_CLASS_NAME,
+        APPOINTMENT_STATUS_SURFACE_CLASS_NAMES[appointment.status],
+      )}
     >
-      <div className="flex items-center justify-between gap-2">
+      <span className="flex items-center justify-between gap-2">
         <span
           className={cn(
             "font-semibold text-sm tabular-nums",
@@ -59,18 +48,21 @@ export function AppointmentCard({
         </span>
         <ModalityIcon
           aria-label={APPOINTMENT_MODALITY_LABELS[appointment.modality]}
-          className="size-3.5 text-muted-foreground"
+          className="size-3.5 shrink-0 text-muted-foreground"
         />
-      </div>
+      </span>
       <span
         className={cn(
-          "line-clamp-2 font-medium text-sm leading-snug",
-          isCancelled && "text-muted-foreground",
+          SCHEDULE_CARD_TITLE_CLASS_NAME,
+          isCancelled && "text-destructive line-through",
         )}
       >
         {appointment.patientName}
       </span>
-      <AppointmentStatusBadge status={appointment.status} />
+      <AppointmentStatusBadge
+        status={appointment.status}
+        className={SCHEDULE_CARD_BADGE_CLASS_NAME}
+      />
     </button>
   );
 }

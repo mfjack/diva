@@ -8,7 +8,7 @@ type DetailsSectionProps = {
 export function DetailsSection({ title, children }: DetailsSectionProps) {
   return (
     <section className="flex flex-col gap-1">
-      <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+      <h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
         {title}
       </h3>
       <dl className="divide-y text-sm">{children}</dl>

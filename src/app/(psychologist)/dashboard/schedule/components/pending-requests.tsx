@@ -34,7 +34,7 @@ export function PendingRequests({
             Sessões aguardando sua resposta
           </p>
         </div>
-        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-warning/14 px-2 font-semibold text-warning text-xs">
+        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-warning/14 px-2 font-semibold text-warning text-sm">
           {appointments.length}
         </span>
       </header>

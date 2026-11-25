@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { Appointment } from "@/features/appointments/types";
+import type { CalendarEventId } from "@/features/calendar-events/types";
 import { zonedDateTime } from "@/lib/dates";
 import {
+  buildScheduleHref,
   formatWeekRange,
+  getPeriodLabel,
   getVisibleDateKeys,
-  getWeekLabel,
+  getVisibleMonthWeeks,
+  listDayItems,
   listPendingRequests,
   mergeAppointments,
 } from "./schedule-layout";
@@ -45,11 +49,11 @@ describe("getVisibleDateKeys", () => {
 
 describe("getWeekLabel", () => {
   it("describes the week relative to today", () => {
-    expect(getWeekLabel(0)).toBe("Esta semana");
-    expect(getWeekLabel(1)).toBe("Próxima semana");
-    expect(getWeekLabel(-1)).toBe("Semana passada");
-    expect(getWeekLabel(3)).toBe("Daqui a 3 semanas");
-    expect(getWeekLabel(-2)).toBe("Há 2 semanas");
+    expect(getPeriodLabel("week", 0)).toBe("Esta semana");
+    expect(getPeriodLabel("week", 1)).toBe("Próxima semana");
+    expect(getPeriodLabel("week", -1)).toBe("Semana passada");
+    expect(getPeriodLabel("week", 3)).toBe("Daqui a 3 semanas");
+    expect(getPeriodLabel("week", -2)).toBe("Há 2 semanas");
   });
 });
 
@@ -88,5 +92,82 @@ describe("mergeAppointments", () => {
       first,
       second,
     ]);
+  });
+});
+
+describe("getPeriodLabel for months", () => {
+  it("describes the month relative to today", () => {
+    expect(getPeriodLabel("month", 0)).toBe("Este mês");
+    expect(getPeriodLabel("month", -1)).toBe("Mês passado");
+    expect(getPeriodLabel("month", 3)).toBe("Daqui a 3 meses");
+  });
+});
+
+describe("getVisibleMonthWeeks", () => {
+  it("keeps only the weekdays with working hours or sessions", () => {
+    const weeks = [WEEK];
+    const visibleWeeks = getVisibleMonthWeeks(
+      weeks,
+      [{ weekday: 1 }, { weekday: 3 }],
+      [{ startsAt: at(SATURDAY, "10:00") }],
+    );
+    expect(visibleWeeks).toEqual([[MONDAY, "2026-11-25", SATURDAY]]);
+  });
+});
+
+describe("buildScheduleHref", () => {
+  it("keeps the default week view clean and names the month view", () => {
+    expect(buildScheduleHref("week", 0)).toBe("/dashboard/schedule");
+    expect(buildScheduleHref("week", -2)).toBe("/dashboard/schedule?week=-2");
+    expect(buildScheduleHref("month", 0)).toBe(
+      "/dashboard/schedule?view=month",
+    );
+    expect(buildScheduleHref("month", 1)).toBe(
+      "/dashboard/schedule?view=month&month=1",
+    );
+  });
+});
+
+describe("listDayItems", () => {
+  it("mixes sessions and events of the day in time order", () => {
+    const items = listDayItems(
+      MONDAY,
+      [
+        appointment(at(MONDAY, "14:00"), "confirmed"),
+        appointment(at(MONDAY, "09:00"), "cancelled"),
+        appointment(at(SATURDAY, "09:00"), "confirmed"),
+      ],
+      [
+        {
+          id: "event-1" as CalendarEventId,
+          seriesId: null,
+          title: "Supervisão",
+          notes: null,
+          startsAt: at(MONDAY, "10:00"),
+          endsAt: at(MONDAY, "11:00"),
+        },
+      ],
+    );
+    expect(items.map(({ kind }) => kind)).toEqual([
+      "session",
+      "event",
+      "session",
+    ]);
+  });
+
+  it("puts a cancelled session after the active one at the same time", () => {
+    const items = listDayItems(
+      MONDAY,
+      [
+        appointment(at(MONDAY, "09:00"), "cancelled"),
+        appointment(at(MONDAY, "09:00"), "confirmed"),
+      ],
+      [],
+    );
+    expect(
+      items.map((item) =>
+        item.kind === "session" ? item.appointment.status : item.kind,
+      ),
+    ).toEqual(["confirmed", "cancelled"]);
   });
 });

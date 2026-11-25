@@ -3,6 +3,7 @@ import "server-only";
 import type { QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
 import { getCurrentUser } from "@/features/auth/queries";
+import { listCalendarEventsBetween } from "@/features/calendar-events/queries";
 import type { PatientId } from "@/features/patients/types";
 import type { BusyInterval } from "@/features/practice-settings/availability";
 import {
@@ -147,12 +148,16 @@ export async function listBusyIntervalsOn(
   dateKey: string,
   ignoredAppointmentId?: string,
 ): Promise<BusyInterval[]> {
-  const appointments = await listAppointmentsBetween(dateKey, dateKey);
-  return appointments
-    .filter(
+  const [appointments, events] = await Promise.all([
+    listAppointmentsBetween(dateKey, dateKey),
+    listCalendarEventsBetween(dateKey, dateKey),
+  ]);
+  return [
+    ...appointments.filter(
       ({ id, status }) => id !== ignoredAppointmentId && status !== "cancelled",
-    )
-    .map(({ startsAt, endsAt }) => ({ startsAt, endsAt }));
+    ),
+    ...events,
+  ].map(({ startsAt, endsAt }) => ({ startsAt, endsAt }));
 }
 
 export async function getSessionPlan(
@@ -161,13 +166,13 @@ export async function getSessionPlan(
   const dateKeys = planSessionDateKeys(input);
   const firstDateKey = dateKeys[0] ?? input.date;
   const lastDateKey = dateKeys.at(-1) ?? input.date;
-  const [settings, rules, appointments, blocks] = await Promise.all([
+  const periodStartKey = addDaysToDateKey(firstDateKey, -1);
+  const periodEndKey = addDaysToDateKey(lastDateKey, 1);
+  const [settings, rules, appointments, events, blocks] = await Promise.all([
     getPracticeSettings(),
     listAvailabilityRules(),
-    listAppointmentsBetween(
-      addDaysToDateKey(firstDateKey, -1),
-      addDaysToDateKey(lastDateKey, 1),
-    ),
+    listAppointmentsBetween(periodStartKey, periodEndKey),
+    listCalendarEventsBetween(periodStartKey, periodEndKey),
     listAvailabilityBlocks(),
   ]);
 
@@ -176,7 +181,10 @@ export async function getSessionPlan(
       rules,
       sessionDurationMinutes: settings.sessionDurationMinutes,
     },
-    appointments: appointments.filter(({ status }) => status !== "cancelled"),
+    appointments: [
+      ...appointments.filter(({ status }) => status !== "cancelled"),
+      ...events,
+    ],
     blocks,
     now: Date.now(),
   });

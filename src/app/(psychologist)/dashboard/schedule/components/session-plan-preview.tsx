@@ -34,7 +34,7 @@ function SessionChip({ session, isExcluded, onToggle }: SessionChipProps) {
     return (
       <li
         title={getSkipLabel(session)}
-        className="flex h-7 items-center justify-center rounded-md bg-muted px-2 text-muted-foreground text-xs tabular-nums line-through"
+        className="flex h-7 items-center justify-center rounded-md bg-muted px-2 text-muted-foreground text-sm tabular-nums line-through"
       >
         {label}
       </li>
@@ -45,7 +45,7 @@ function SessionChip({ session, isExcluded, onToggle }: SessionChipProps) {
   return (
     <li
       className={cn(
-        "flex h-7 items-center justify-between gap-1 rounded-md pr-1 pl-2 text-xs tabular-nums",
+        "flex h-7 items-center justify-between gap-1 rounded-md pr-1 pl-2 text-sm tabular-nums",
         isExcluded
           ? "bg-muted text-muted-foreground line-through"
           : "bg-primary/8 text-primary",
@@ -115,7 +115,7 @@ export function SessionPlanPreview({
         ))}
       </ul>
       {skippedSessions.length > 0 && (
-        <ul className="flex flex-col gap-1 text-xs">
+        <ul className="flex flex-col gap-1 text-sm">
           {skippedSessions.map((session) => (
             <li
               key={session.dateKey}

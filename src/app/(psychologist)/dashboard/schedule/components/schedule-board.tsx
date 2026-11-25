@@ -7,6 +7,12 @@ import { CancelAppointmentDialog } from "@/features/appointments/components/canc
 import { RescheduleAppointmentDialog } from "@/features/appointments/components/reschedule-appointment-dialog";
 import { useUpdateAppointmentStatusMutation } from "@/features/appointments/hooks/use-update-appointment-status-mutation";
 import type { Appointment, AppointmentId } from "@/features/appointments/types";
+import { CalendarEventDialog } from "@/features/calendar-events/components/calendar-event-dialog";
+import { DeleteCalendarEventDialog } from "@/features/calendar-events/components/delete-calendar-event-dialog";
+import type {
+  CalendarEvent,
+  CalendarEventId,
+} from "@/features/calendar-events/types";
 import type { SessionNoteSummary } from "@/features/clinical-records/types";
 import type { Patient } from "@/features/patients/types";
 import {
@@ -15,15 +21,21 @@ import {
 } from "@/features/payments/components/register-payment-dialog";
 import type { SessionAvailability } from "@/features/practice-settings/availability";
 import { toDateKey } from "@/lib/dates";
-import { listPendingRequests } from "../schedule-layout";
+import {
+  listCalendarDateKeys,
+  listPendingRequests,
+  type ScheduleCalendar,
+} from "../schedule-layout";
 import { AppointmentDetailsSheet } from "./appointment-details-sheet";
+import { MonthGrid } from "./month-grid";
 import { PendingRequests } from "./pending-requests";
 import { WeekColumns } from "./week-columns";
 
 type ScheduleBoardProps = {
   appointments: Appointment[];
+  events: CalendarEvent[];
   patients: Patient[];
-  dateKeys: string[];
+  calendar: ScheduleCalendar;
   now: string;
   cancellationNoticeHours: number;
   pixKey: string | null;
@@ -43,8 +55,9 @@ function toPaymentTarget(appointment: Appointment): PaymentTarget {
 
 export function ScheduleBoard({
   appointments,
+  events,
   patients,
-  dateKeys,
+  calendar,
   now,
   cancellationNoticeHours,
   pixKey,
@@ -63,10 +76,19 @@ export function ScheduleBoard({
   const [paymentTarget, setPaymentTarget] = useState<PaymentTarget | null>(
     null,
   );
+  const [selectedEventId, setSelectedEventId] =
+    useState<CalendarEventId | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(
+    null,
+  );
   const confirmMutation = useUpdateAppointmentStatusMutation();
+  const selectedEvent = events.find(({ id }) => id === selectedEventId) ?? null;
 
-  const visibleDateKeys = useMemo(() => new Set(dateKeys), [dateKeys]);
-  const weekAppointments = useMemo(
+  const visibleDateKeys = useMemo(
+    () => new Set(listCalendarDateKeys(calendar)),
+    [calendar],
+  );
+  const visibleAppointments = useMemo(
     () =>
       appointments.filter(({ startsAt }) =>
         visibleDateKeys.has(toDateKey(startsAt)),
@@ -94,6 +116,19 @@ export function ScheduleBoard({
 
   function handleSelect(appointmentId: AppointmentId) {
     setSelectedAppointmentId(appointmentId);
+  }
+
+  function handleEventDialogOpenChange(isOpen: boolean) {
+    if (!isOpen) setSelectedEventId(null);
+  }
+
+  function handleDeleteEventRequest(event: CalendarEvent) {
+    setSelectedEventId(null);
+    setEventToDelete(event);
+  }
+
+  function handleDeleteEventOpenChange(isOpen: boolean) {
+    if (!isOpen) setEventToDelete(null);
   }
 
   function handleDetailsOpenChange(isOpen: boolean) {
@@ -143,13 +178,28 @@ export function ScheduleBoard({
         aria-label="Semana"
         className="flex min-w-0 flex-1 flex-col gap-4 lg:min-h-0"
       >
-        <WeekColumns
-          dateKeys={dateKeys}
-          appointments={weekAppointments}
-          now={now}
-          onSelect={handleSelect}
-          className="lg:min-h-0 lg:flex-1"
-        />
+        {calendar.view === "week" ? (
+          <WeekColumns
+            dateKeys={calendar.dateKeys}
+            appointments={visibleAppointments}
+            events={events}
+            now={now}
+            onSelect={handleSelect}
+            onSelectEvent={setSelectedEventId}
+            className="lg:min-h-0 lg:flex-1"
+          />
+        ) : (
+          <MonthGrid
+            monthKey={calendar.monthKey}
+            weeks={calendar.weeks}
+            appointments={visibleAppointments}
+            events={events}
+            now={now}
+            onSelect={handleSelect}
+            onSelectEvent={setSelectedEventId}
+            className="lg:min-h-0 lg:flex-1"
+          />
+        )}
       </section>
 
       {pendingRequests.length > 0 && (
@@ -173,6 +223,21 @@ export function ScheduleBoard({
         onCancelRequest={handleCancelRequest}
         onRescheduleRequest={handleRescheduleRequest}
         onRegisterPaymentRequest={handleRegisterPaymentRequest}
+      />
+
+      {selectedEvent && (
+        <CalendarEventDialog
+          key={selectedEvent.id}
+          isOpen
+          event={selectedEvent}
+          onOpenChange={handleEventDialogOpenChange}
+          onDeleteRequest={handleDeleteEventRequest}
+        />
+      )}
+
+      <DeleteCalendarEventDialog
+        event={eventToDelete}
+        onOpenChange={handleDeleteEventOpenChange}
       />
 
       <RescheduleAppointmentDialog

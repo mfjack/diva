@@ -23,7 +23,7 @@ export function DayHeading({ dateKey, isToday }: DayHeadingProps) {
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <span className="text-muted-foreground text-xs uppercase tracking-wide">
+      <span className="text-muted-foreground text-sm uppercase tracking-wide">
         {format(day, "EEEEEE", { locale: ptBR })}
       </span>
       <span
@@ -37,7 +37,7 @@ export function DayHeading({ dateKey, isToday }: DayHeadingProps) {
       {holiday && (
         <span
           title={`${holiday.name} · ${holiday.isOptional ? "Ponto facultativo" : "Feriado nacional"}`}
-          className="min-w-0 truncate text-[0.625rem] text-warning"
+          className="min-w-0 truncate text-sm text-warning"
         >
           {holiday.name}
         </span>
