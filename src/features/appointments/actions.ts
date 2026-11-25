@@ -11,6 +11,7 @@ import { getPatient } from "@/features/patients/queries";
 import {
   type BusyInterval,
   isWithinAvailability,
+  overlaps,
 } from "@/features/practice-settings/availability";
 import {
   getPracticeSettings,
@@ -141,6 +142,7 @@ export async function cancelAppointment(
     "cancel_appointments",
     {
       p_reason: formatCancellationReason(parsedInput.data),
+      p_cancelled_by: parsedInput.data.cancelledBy,
       p_cancellations: appointmentsToCancel.map(({ id, startsAt }) => ({
         id,
         is_late: isLateCancellation(startsAt, cancellationNoticeHours),
@@ -297,6 +299,14 @@ export async function rescheduleAppointment(
     new Date(appointment.endsAt).getTime() -
     new Date(appointment.startsAt).getTime();
   const endsAt = new Date(startsAt.getTime() + durationInMs);
+  const newPeriod = {
+    startsAt: startsAt.toISOString(),
+    endsAt: endsAt.toISOString(),
+  };
+  const busyIntervals = await listBusyIntervalsOn(date, appointment.id);
+  if (busyIntervals.some((busy) => overlaps(newPeriod, busy))) {
+    return actionFailure(APPOINTMENT_ACTION_MESSAGES.conflict);
+  }
   const supabase = await createClient();
   const { error } = await supabase
     .from("appointments")

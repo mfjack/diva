@@ -27,6 +27,11 @@ export const CANCELLATION_ACTOR_LABELS = {
   psychologist: "pelo consultório",
 } as const satisfies Record<CancellationActor, string>;
 
+export const CANCELLATION_REQUESTER_OPTIONS = [
+  { value: "patient", label: "O paciente" },
+  { value: "psychologist", label: "O consultório" },
+] as const satisfies readonly { value: CancellationActor; label: string }[];
+
 export const CANCELLATION_REASONS = [
   { value: "health", label: "Problema de saúde" },
   { value: "work", label: "Compromisso de trabalho" },

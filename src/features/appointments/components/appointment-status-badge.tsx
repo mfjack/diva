@@ -12,13 +12,15 @@ const APPOINTMENT_STATUS_TONES = {
 
 type AppointmentStatusBadgeProps = {
   status: AppointmentStatus;
+  className?: string;
 };
 
 export function AppointmentStatusBadge({
   status,
+  className,
 }: AppointmentStatusBadgeProps) {
   return (
-    <StatusBadge tone={APPOINTMENT_STATUS_TONES[status]}>
+    <StatusBadge tone={APPOINTMENT_STATUS_TONES[status]} className={className}>
       {APPOINTMENT_STATUS_LABELS[status]}
     </StatusBadge>
   );

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { optionalMeetingUrlSchema } from "@/lib/meeting-url";
 import { CANCELLATION_REASONS } from "./labels";
 import { SESSION_REPEATS } from "./recurring-sessions";
+import type { CancellationActor } from "./types";
 
 const CANCELLATION_REASON_VALUES = CANCELLATION_REASONS.map(
   ({ value }) => value,
@@ -15,8 +16,16 @@ const CANCELLATION_DETAILS_MAX_LENGTH = 400;
 
 const CANCELLATION_SCOPES = ["single", "following"] as const;
 
+const CANCELLATION_ACTORS = [
+  "patient",
+  "psychologist",
+] as const satisfies readonly CancellationActor[];
+
 export const cancelAppointmentSchema = z.object({
   scope: z.enum(CANCELLATION_SCOPES),
+  cancelledBy: z.enum(CANCELLATION_ACTORS, {
+    error: "Diga quem pediu o cancelamento.",
+  }),
   reasonCategory: z.enum(CANCELLATION_REASON_VALUES, {
     error: "Escolha o motivo do cancelamento.",
   }),
