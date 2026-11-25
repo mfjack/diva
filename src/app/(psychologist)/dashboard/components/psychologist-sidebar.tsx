@@ -51,7 +51,7 @@ export function PsychologistSidebar({
           <SidebarLink {...PSYCHOLOGIST_SETTINGS_ITEM} />
         </SidebarMenu>
         <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-3 rounded-lg p-1.5">
+          <SidebarMenuItem className="flex items-center gap-3 rounded-lg p-1.5 group-data-[collapsible=icon]:p-0">
             <Avatar className="size-8 rounded-lg after:hidden">
               {avatarUrl && (
                 <AvatarImage
@@ -61,7 +61,7 @@ export function PsychologistSidebar({
                   className="rounded-lg"
                 />
               )}
-              <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-xs">
+              <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-sm">
                 {getInitials(psychologistName)}
               </AvatarFallback>
             </Avatar>
@@ -70,13 +70,13 @@ export function PsychologistSidebar({
                 {psychologistName}
               </span>
               {professionalRegistration ? (
-                <span className="truncate text-xs">
+                <span className="truncate text-sm">
                   {professionalRegistration}
                 </span>
               ) : (
                 <Link
                   href={ROUTES.psychologist.settings}
-                  className="truncate text-warning text-xs underline-offset-4 hover:underline"
+                  className="truncate text-warning text-sm underline-offset-4 hover:underline"
                 >
                   Adicione seu CRP
                 </Link>

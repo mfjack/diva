@@ -33,7 +33,7 @@ export function SidebarLink({
       <SidebarMenuButton
         isActive={isActive}
         tooltip={label}
-        className="h-10 gap-3 px-3 data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary data-active:hover:text-sidebar-primary-foreground"
+        className="h-10 gap-3 px-3 group-data-[collapsible=icon]:p-1.5! [&_svg]:size-5 data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary data-active:hover:text-sidebar-primary-foreground"
         render={
           <Link
             href={href}

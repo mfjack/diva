@@ -12,10 +12,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
     <header className="sticky top-0 z-10 flex shrink-0 flex-col gap-4 border-b bg-background px-4 py-5 sm:flex-row sm:items-center md:px-8">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-center gap-2">
-          <SidebarTrigger
-            aria-label="Abrir menu"
-            className="-ml-1.5 md:hidden"
-          />
+          <SidebarTrigger className="-ml-1.5" />
           <h1 className="font-heading font-semibold text-lg leading-tight tracking-tight">
             {title}
           </h1>
