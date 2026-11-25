@@ -45,7 +45,7 @@ export function CheckboxField<TFieldValues extends FieldValues>({
             <FieldError
               id={errorId}
               errors={[fieldState.error]}
-              className="text-[0.6875rem]"
+              className="text-sm"
             />
           )}
         </Field>

@@ -46,7 +46,7 @@ export function PatientsTable({
                 {row.original.fullName}
               </span>
               {row.original.email && (
-                <span className="truncate text-muted-foreground text-xs">
+                <span className="truncate text-muted-foreground text-sm">
                   {row.original.email}
                 </span>
               )}

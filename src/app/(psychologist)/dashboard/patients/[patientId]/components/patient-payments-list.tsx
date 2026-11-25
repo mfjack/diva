@@ -33,7 +33,7 @@ export function PatientPaymentsList({ payments }: PatientPaymentsListProps) {
             <span className="font-medium">
               Sessão de {formatDate(payment.sessionStartsAt)}
             </span>
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-sm">
               {describePaymentState(payment)}
               {payment.receiptNumber && ` · Recibo nº ${payment.receiptNumber}`}
             </span>

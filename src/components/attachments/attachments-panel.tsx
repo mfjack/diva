@@ -58,7 +58,7 @@ export function AttachmentsPanel({
         <label htmlFor={inputId} className="font-medium text-sm">
           {title}
         </label>
-        <span className="text-muted-foreground text-xs">
+        <span className="text-muted-foreground text-sm">
           PDF ou imagem, até 5 MB
         </span>
       </div>

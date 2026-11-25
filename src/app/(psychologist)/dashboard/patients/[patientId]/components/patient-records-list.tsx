@@ -24,7 +24,7 @@ export function PatientRecordsList({ records }: PatientRecordsListProps) {
           >
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="truncate font-medium">{record.title}</span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 {record.sessionStartsAt
                   ? `Sessão de ${formatDate(record.sessionStartsAt)}`
                   : `Atualizada em ${formatDate(record.updatedAt)}`}

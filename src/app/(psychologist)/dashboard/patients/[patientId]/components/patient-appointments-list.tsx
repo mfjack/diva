@@ -27,10 +27,10 @@ function PatientAppointmentItem({ appointment }: PatientAppointmentItemProps) {
           isCancelled && "text-muted-foreground",
         )}
       >
-        <span className="font-semibold text-base tabular-nums">
+        <span className="font-semibold text-sm tabular-nums">
           {format(startsAt, "d")}
         </span>
-        <span className="text-xs">
+        <span className="text-sm">
           {format(startsAt, "MMM", { locale: ptBR })}
         </span>
       </div>
@@ -43,16 +43,16 @@ function PatientAppointmentItem({ appointment }: PatientAppointmentItemProps) {
         >
           {format(startsAt, "EEEE", { locale: ptBR })}
         </span>
-        <span className="flex items-center gap-2 text-muted-foreground text-xs tabular-nums">
+        <span className="flex items-center gap-2 text-muted-foreground text-sm tabular-nums">
           {formatTime(appointment.startsAt)} – {formatTime(appointment.endsAt)}
           <AppointmentModalityLabel
             modality={appointment.modality}
             isTextHidden
-            className="text-xs"
+            className="text-sm"
           />
         </span>
         {appointment.cancellation?.reason && (
-          <span className="truncate text-muted-foreground text-xs">
+          <span className="truncate text-muted-foreground text-sm">
             Motivo: {appointment.cancellation.reason}
           </span>
         )}

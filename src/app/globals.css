@@ -173,7 +173,7 @@
 
 @layer components {
   .rich-text {
-    @apply text-[0.9375rem] leading-relaxed;
+    @apply text-sm leading-relaxed;
   }
 
   .rich-text > * + * {

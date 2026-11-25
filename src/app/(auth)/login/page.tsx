@@ -38,7 +38,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           nextPath={getSingleSearchParam(next)}
         />
       </div>
-      <p className="text-center text-muted-foreground text-xs leading-relaxed">
+      <p className="text-center text-muted-foreground text-sm leading-relaxed">
         Ao entrar, você concorda com os{" "}
         <Link href={ROUTES.terms} className="text-primary hover:underline">
           Termos de Uso

@@ -19,7 +19,7 @@ export function LegalDocument({
           {title}
         </h1>
         <p className="text-muted-foreground">{summary}</p>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-sm">
           Atualizado em {LEGAL_DOCUMENTS_UPDATED_AT}
         </p>
       </header>

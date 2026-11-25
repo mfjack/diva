@@ -86,10 +86,10 @@ export function ExpenseRow({
           isOverdue && "bg-destructive/10 text-destructive",
         )}
       >
-        <span className="font-semibold text-base tabular-nums">
+        <span className="font-semibold text-sm tabular-nums">
           {format(dueDate, "d")}
         </span>
-        <span className="text-xs">
+        <span className="text-sm">
           {format(dueDate, "MMM", { locale: ptBR })}
         </span>
       </div>
@@ -102,11 +102,11 @@ export function ExpenseRow({
         >
           {expense.description}
         </span>
-        <span className="truncate text-muted-foreground text-xs">
+        <span className="truncate text-muted-foreground text-sm">
           {getDetails(occurrence)}
         </span>
         {(expense.notes || expense.attachments.length > 0) && (
-          <span className="flex min-w-0 items-center gap-3 text-muted-foreground text-xs">
+          <span className="flex min-w-0 items-center gap-3 text-muted-foreground text-sm">
             {expense.notes && (
               <span className="flex min-w-0 items-center gap-1">
                 <MessageSquareText aria-hidden className="size-3.5 shrink-0" />

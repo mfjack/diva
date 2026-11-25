@@ -174,7 +174,7 @@ export function ClinicalRecordEditor({
           description="As anotações ficam ligadas a essa sessão na agenda."
         />
 
-        <p className="flex items-start gap-2 rounded-lg bg-muted p-3 text-muted-foreground text-xs">
+        <p className="flex items-start gap-2 rounded-lg bg-muted p-3 text-muted-foreground text-sm">
           <LockKeyhole aria-hidden className="mt-0.5 size-3.5 shrink-0" />O
           conteúdo e os anexos são criptografados, e cada acesso fica
           registrado, conforme o sigilo profissional e a LGPD.

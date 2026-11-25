@@ -20,7 +20,7 @@ function ResultBar({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between text-muted-foreground text-xs">
+      <div className="flex justify-between text-muted-foreground text-sm">
         <span>{label}</span>
         <span className="tabular-nums">{formatCurrency(amountCents)}</span>
       </div>
@@ -49,7 +49,7 @@ export function MonthResultCard({
   return (
     <article className="flex flex-col gap-2 rounded-xl border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
-        <span className="font-medium text-muted-foreground text-xs">
+        <span className="font-medium text-muted-foreground text-sm">
           Resultado do mês
         </span>
         <Scale aria-hidden className="size-4 text-muted-foreground" />

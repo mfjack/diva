@@ -29,7 +29,7 @@ export function StatCard({
       <div className="flex items-center justify-between gap-3">
         <span
           className={cn(
-            "font-medium text-xs",
+            "font-medium text-sm",
             isHighlighted
               ? "text-primary-foreground/75"
               : "text-muted-foreground",
@@ -53,7 +53,7 @@ export function StatCard({
       {hint && (
         <p
           className={cn(
-            "text-xs",
+            "text-sm",
             isHighlighted
               ? "text-primary-foreground/75"
               : "text-muted-foreground",

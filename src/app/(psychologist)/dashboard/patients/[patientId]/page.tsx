@@ -52,7 +52,7 @@ type InfoItemProps = {
 function InfoItem({ label, children }: InfoItemProps) {
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="text-muted-foreground text-xs">{label}</dt>
+      <dt className="text-muted-foreground text-sm">{label}</dt>
       <dd className="text-sm">{children}</dd>
     </div>
   );

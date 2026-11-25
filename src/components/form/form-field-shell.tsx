@@ -44,14 +44,10 @@ export function FormFieldShell({
       </div>
       {children}
       {error ? (
-        <FieldError
-          id={descriptionId}
-          errors={[error]}
-          className="text-[0.6875rem]"
-        />
+        <FieldError id={descriptionId} errors={[error]} className="text-sm" />
       ) : (
         description && (
-          <FieldDescription id={descriptionId} className="text-[0.8125rem]">
+          <FieldDescription id={descriptionId} className="text-sm">
             {description}
           </FieldDescription>
         )

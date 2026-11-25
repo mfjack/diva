@@ -72,7 +72,7 @@ function TagsInput({
       {value.map((tag) => (
         <span
           key={tag}
-          className="flex h-7 items-center gap-1 rounded-md bg-primary/10 pr-1 pl-2 text-primary text-xs"
+          className="flex h-7 items-center gap-1 rounded-md bg-primary/10 pr-1 pl-2 text-primary text-sm"
         >
           {tag}
           <button
@@ -96,7 +96,7 @@ function TagsInput({
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          className="h-7 min-w-24 flex-1 bg-transparent text-[0.9375rem] outline-none placeholder:text-muted-foreground"
+          className="h-7 min-w-24 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
       )}
       <datalist id={suggestionsId}>

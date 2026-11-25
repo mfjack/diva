@@ -32,7 +32,7 @@ export function AttachmentRow({
       ) : (
         <span className="min-w-0 flex-1 truncate">{name}</span>
       )}
-      <span className="shrink-0 text-muted-foreground text-xs">
+      <span className="shrink-0 text-muted-foreground text-sm">
         {formatFileSize(sizeBytes)}
       </span>
       <Button

@@ -117,7 +117,7 @@ export function TimeField<TFieldValues extends FieldValues>({
                 )}
                 {timeGroups.map((group) => (
                   <div key={group.period} className="flex flex-col gap-2">
-                    <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                    <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
                       {group.label}
                     </span>
                     <div role="listbox" className="grid grid-cols-4 gap-1">

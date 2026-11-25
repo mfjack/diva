@@ -46,7 +46,7 @@ function SaveStatus({ isSaving, hasError, savedAt }: SaveStatusProps) {
     <span
       role="status"
       className={cn(
-        "text-xs",
+        "text-sm",
         hasError ? "text-destructive" : "text-muted-foreground",
       )}
     >
@@ -239,7 +239,7 @@ export function StudyNoteEditor({
         onRemove={handleRemoveAttachment}
       />
 
-      <p className="flex items-center gap-2 text-muted-foreground text-xs">
+      <p className="flex items-center gap-2 text-muted-foreground text-sm">
         <ShieldAlert aria-hidden className="size-4 shrink-0" />
         Evite dados que identifiquem pacientes. Para isso, use o prontuário.
       </p>

@@ -43,7 +43,7 @@ export function StudyKindField({ form, kinds }: StudyKindFieldProps) {
           <button
             type="button"
             onClick={handleShowList}
-            className="font-medium text-primary text-xs hover:underline"
+            className="font-medium text-primary text-sm hover:underline"
           >
             Escolher da lista
           </button>

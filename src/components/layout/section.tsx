@@ -22,7 +22,7 @@ export function Section({
         <div className="flex flex-col gap-0.5">
           <h2 className="font-semibold text-base">{title}</h2>
           {description && (
-            <p className="text-muted-foreground text-xs">{description}</p>
+            <p className="text-muted-foreground text-sm">{description}</p>
           )}
         </div>
         {action}
