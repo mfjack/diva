@@ -24,7 +24,7 @@ import { getDayLabel } from "./day-heading";
 const MAX_VISIBLE_ITEMS = 3;
 
 const CHIP_CLASS_NAME =
-  "flex w-full min-w-0 items-center gap-1 rounded border px-1.5 py-0.5 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-ring";
+  "flex h-6 w-full min-w-0 items-center gap-1 rounded border px-1.5 text-left text-sm leading-none transition-colors focus-visible:outline-2 focus-visible:outline-ring";
 
 const EVENT_CHIP_CLASS_NAME =
   "border-primary/30 border-dashed bg-background hover:border-primary";
@@ -70,6 +70,7 @@ function MonthItemChip({ item, onSelect, onSelectEvent }: MonthItemChipProps) {
       <button
         type="button"
         onClick={() => onSelectEvent(item.event.id)}
+        title={`${formatTime(item.startsAt)} – ${formatTime(item.event.endsAt)} · ${item.event.title}`}
         className={cn(CHIP_CLASS_NAME, EVENT_CHIP_CLASS_NAME)}
       >
         <span className="shrink-0 font-semibold tabular-nums">
@@ -84,6 +85,7 @@ function MonthItemChip({ item, onSelect, onSelectEvent }: MonthItemChipProps) {
     <button
       type="button"
       onClick={() => onSelect(item.appointment.id)}
+      title={`${formatTime(item.startsAt)} · ${item.appointment.patientName}`}
       className={cn(
         CHIP_CLASS_NAME,
         APPOINTMENT_STATUS_SURFACE_CLASS_NAMES[item.appointment.status],
@@ -131,7 +133,7 @@ function MonthDay({
           href={weekHref}
           aria-label={`Abrir a semana de ${getDayLabel(dateKey)}`}
           className={cn(
-            "flex size-6 shrink-0 items-center justify-center rounded-full font-semibold text-sm hover:bg-muted",
+            "flex size-7 shrink-0 items-center justify-center rounded-full font-semibold text-sm leading-none tabular-nums hover:bg-muted",
             isOutsideMonth && "text-muted-foreground",
             isToday && "bg-primary text-primary-foreground hover:bg-primary/90",
           )}
