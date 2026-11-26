@@ -1,10 +1,11 @@
 "use client";
 
 import { X } from "lucide-react";
-import { type KeyboardEvent, useId, useState } from "react";
-import { Controller, type FieldValues } from "react-hook-form";
+import { type KeyboardEvent, useState } from "react";
+import type { FieldValues } from "react-hook-form";
 import { cn } from "@/lib/utils";
-import { FormFieldShell, getFieldDescriptionId } from "./form-field-shell";
+import { ControlledFormField } from "./controlled-form-field";
+import { getFieldDescriptionId } from "./form-field-shell";
 import type { FormFieldProps } from "./form-field-types";
 
 const TAG_SEPARATOR_KEYS = new Set(["Enter", ","]);
@@ -119,43 +120,25 @@ type TagsFieldProps<TFieldValues extends FieldValues> = Omit<
 };
 
 export function TagsField<TFieldValues extends FieldValues>({
-  control,
-  name,
-  label,
-  description,
-  labelAction,
-  isLabelHidden,
   placeholder = "Digite e aperte Enter",
   suggestions = [],
   maxTags,
+  ...fieldProps
 }: TagsFieldProps<TFieldValues>) {
-  const inputId = useId();
-
   return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field, fieldState }) => (
-        <FormFieldShell
-          inputId={inputId}
-          label={label}
-          description={description}
-          labelAction={labelAction}
-          isLabelHidden={isLabelHidden}
-          error={fieldState.error}
-        >
-          <TagsInput
-            inputId={inputId}
-            value={field.value ?? []}
-            suggestions={suggestions}
-            placeholder={placeholder}
-            maxTags={maxTags}
-            isInvalid={fieldState.invalid}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-          />
-        </FormFieldShell>
+    <ControlledFormField {...fieldProps}>
+      {({ field, controlProps }) => (
+        <TagsInput
+          inputId={controlProps.id}
+          value={field.value ?? []}
+          suggestions={suggestions}
+          placeholder={placeholder}
+          maxTags={maxTags}
+          isInvalid={controlProps["aria-invalid"]}
+          onChange={field.onChange}
+          onBlur={field.onBlur}
+        />
       )}
-    />
+    </ControlledFormField>
   );
 }

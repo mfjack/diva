@@ -1,10 +1,9 @@
 "use client";
 
-import { useId } from "react";
-import { Controller, type FieldValues } from "react-hook-form";
+import type { FieldValues } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { FormFieldShell, getFieldDescriptionId } from "./form-field-shell";
+import { ControlledFormField } from "./controlled-form-field";
 import { FORM_INPUT_CLASS_NAME } from "./form-field-styles";
 import type { FormFieldProps } from "./form-field-types";
 
@@ -20,47 +19,27 @@ type TextareaFieldProps<TFieldValues extends FieldValues> =
   };
 
 export function TextareaField<TFieldValues extends FieldValues>({
-  control,
-  name,
-  label,
-  description,
-  labelAction,
-  isLabelHidden,
   placeholder,
   autoComplete,
   size = "default",
+  ...fieldProps
 }: TextareaFieldProps<TFieldValues>) {
-  const inputId = useId();
-
   return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field, fieldState }) => (
-        <FormFieldShell
-          inputId={inputId}
-          label={label}
-          description={description}
-          labelAction={labelAction}
-          isLabelHidden={isLabelHidden}
-          error={fieldState.error}
-        >
-          <Textarea
-            {...field}
-            value={field.value ?? ""}
-            id={inputId}
-            placeholder={placeholder}
-            autoComplete={autoComplete}
-            aria-invalid={fieldState.invalid}
-            aria-describedby={getFieldDescriptionId(inputId)}
-            className={cn(
-              FORM_INPUT_CLASS_NAME,
-              "h-auto py-2.5",
-              TEXTAREA_SIZE_CLASS_NAMES[size],
-            )}
-          />
-        </FormFieldShell>
+    <ControlledFormField {...fieldProps}>
+      {({ field, controlProps }) => (
+        <Textarea
+          {...field}
+          value={field.value ?? ""}
+          {...controlProps}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          className={cn(
+            FORM_INPUT_CLASS_NAME,
+            "h-auto py-2.5",
+            TEXTAREA_SIZE_CLASS_NAMES[size],
+          )}
+        />
       )}
-    />
+    </ControlledFormField>
   );
 }

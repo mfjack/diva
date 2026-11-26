@@ -1,12 +1,11 @@
 "use client";
 
-import { useId } from "react";
-import { Controller, type FieldValues } from "react-hook-form";
+import type { FieldValues } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { Input } from "@/components/ui/input";
 import { CURRENCY_SYMBOL } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { FormFieldShell, getFieldDescriptionId } from "./form-field-shell";
+import { ControlledFormField } from "./controlled-form-field";
 import { FORM_INPUT_CLASS_NAME } from "./form-field-styles";
 import type { FormFieldProps } from "./form-field-types";
 
@@ -37,58 +36,38 @@ type NumberFieldProps<TFieldValues extends FieldValues> = Omit<
 };
 
 export function NumberField<TFieldValues extends FieldValues>({
-  control,
-  name,
-  label,
-  description,
-  labelAction,
-  isLabelHidden,
   placeholder,
   format,
   suffix,
   isDisabled = false,
   size = "default",
+  ...fieldProps
 }: NumberFieldProps<TFieldValues>) {
-  const inputId = useId();
   const preset = NUMBER_FORMAT_PRESETS[format];
-
   return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field, fieldState }) => (
-        <FormFieldShell
-          inputId={inputId}
-          label={label}
-          description={description}
-          labelAction={labelAction}
-          isLabelHidden={isLabelHidden}
-          error={fieldState.error}
-        >
-          <NumericFormat
-            customInput={Input}
-            getInputRef={field.ref}
-            id={inputId}
-            name={field.name}
-            value={Number.isFinite(field.value) ? field.value : ""}
-            onValueChange={({ floatValue }) => field.onChange(floatValue)}
-            onBlur={field.onBlur}
-            disabled={isDisabled}
-            inputMode="decimal"
-            thousandSeparator="."
-            decimalSeparator=","
-            allowNegative={false}
-            prefix={preset.prefix}
-            suffix={suffix ? ` ${suffix}` : undefined}
-            decimalScale={preset.decimalScale}
-            fixedDecimalScale={preset.fixedDecimalScale}
-            placeholder={placeholder}
-            aria-invalid={fieldState.invalid}
-            aria-describedby={getFieldDescriptionId(inputId)}
-            className={cn(FORM_INPUT_CLASS_NAME, INPUT_SIZE_CLASS_NAMES[size])}
-          />
-        </FormFieldShell>
+    <ControlledFormField {...fieldProps}>
+      {({ field, controlProps }) => (
+        <NumericFormat
+          customInput={Input}
+          getInputRef={field.ref}
+          {...controlProps}
+          name={field.name}
+          value={Number.isFinite(field.value) ? field.value : ""}
+          onValueChange={({ floatValue }) => field.onChange(floatValue)}
+          onBlur={field.onBlur}
+          disabled={isDisabled}
+          inputMode="decimal"
+          thousandSeparator="."
+          decimalSeparator=","
+          allowNegative={false}
+          prefix={preset.prefix}
+          suffix={suffix ? ` ${suffix}` : undefined}
+          decimalScale={preset.decimalScale}
+          fixedDecimalScale={preset.fixedDecimalScale}
+          placeholder={placeholder}
+          className={cn(FORM_INPUT_CLASS_NAME, INPUT_SIZE_CLASS_NAMES[size])}
+        />
       )}
-    />
+    </ControlledFormField>
   );
 }

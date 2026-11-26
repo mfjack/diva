@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FormFieldShell, getFieldDescriptionId } from "./form-field-shell";
 import type { FormFieldProps } from "./form-field-types";
 
-export type RadioOption = {
+type RadioOption = {
   value: string;
   label: string;
   description?: string;

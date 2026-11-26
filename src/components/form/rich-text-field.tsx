@@ -19,11 +19,10 @@ import {
   type LucideIcon,
   Quote,
 } from "lucide-react";
-import { useId } from "react";
-import { Controller, type FieldValues } from "react-hook-form";
+import type { FieldValues } from "react-hook-form";
 import { Toggle } from "@/components/ui/toggle";
 import type { RichTextDocument, RichTextNode } from "@/lib/rich-text";
-import { FormFieldShell } from "./form-field-shell";
+import { ControlledFormField } from "./controlled-form-field";
 import type { FormFieldProps } from "./form-field-types";
 
 type FormattingAction = {
@@ -168,38 +167,20 @@ type RichTextFieldProps<TFieldValues extends FieldValues> = Omit<
 >;
 
 export function RichTextField<TFieldValues extends FieldValues>({
-  control,
-  name,
-  label,
-  description,
-  labelAction,
-  isLabelHidden,
   placeholder = "Comece a escrever…",
+  ...fieldProps
 }: RichTextFieldProps<TFieldValues>) {
-  const inputId = useId();
-
   return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field, fieldState }) => (
-        <FormFieldShell
-          inputId={inputId}
-          label={label}
-          description={description}
-          labelAction={labelAction}
-          isLabelHidden={isLabelHidden}
-          error={fieldState.error}
-        >
-          <RichTextEditor
-            inputId={inputId}
-            label={label}
-            value={field.value}
-            placeholder={placeholder}
-            onChange={field.onChange}
-          />
-        </FormFieldShell>
+    <ControlledFormField {...fieldProps}>
+      {({ field, controlProps }) => (
+        <RichTextEditor
+          inputId={controlProps.id}
+          label={fieldProps.label}
+          value={field.value}
+          placeholder={placeholder}
+          onChange={field.onChange}
+        />
       )}
-    />
+    </ControlledFormField>
   );
 }
