@@ -82,7 +82,6 @@ export function AppointmentPaymentSection({
               patientName: appointment.patientName,
               sessionStartsAt: appointment.startsAt,
               amountCents: appointment.priceCents,
-              receiptNumber: null,
             }}
           />
         )}

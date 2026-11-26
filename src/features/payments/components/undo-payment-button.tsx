@@ -3,29 +3,22 @@
 import { Undo2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { DataTableRowActionButton } from "@/components/data-table/data-table-row-action-button";
 import { ConfirmDialog } from "@/components/dialog/confirm-dialog";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useUndoPaymentMutation } from "../hooks/use-undo-payment-mutation";
 import type { Payment } from "../types";
+import { PaymentActionButton } from "./payment-action-button";
 
 type UndoPaymentButtonProps = {
   payment: Pick<
     Payment,
-    | "appointmentId"
-    | "patientName"
-    | "sessionStartsAt"
-    | "amountCents"
-    | "receiptNumber"
+    "appointmentId" | "patientName" | "sessionStartsAt" | "amountCents"
   >;
 };
 
 function describeUndo(payment: UndoPaymentButtonProps["payment"]): string {
   const session = `Sessão de ${formatDate(payment.sessionStartsAt)} de ${payment.patientName}, ${formatCurrency(payment.amountCents)}`;
-  const receipt = payment.receiptNumber
-    ? ` O recibo nº ${payment.receiptNumber} deixa de valer.`
-    : "";
-  return `${session}. O pagamento volta a ficar em aberto.${receipt}`;
+  return `${session}. O pagamento volta a ficar em aberto.`;
 }
 
 export function UndoPaymentButton({ payment }: UndoPaymentButtonProps) {
@@ -48,10 +41,11 @@ export function UndoPaymentButton({ payment }: UndoPaymentButtonProps) {
 
   return (
     <>
-      <DataTableRowActionButton
-        label="Desfazer pagamento"
-        accessibleLabel={`Desfazer pagamento da sessão de ${formatDate(payment.sessionStartsAt)}`}
+      <PaymentActionButton
         icon={Undo2}
+        label="Desfazer"
+        accessibleLabel={`Desfazer pagamento da sessão de ${formatDate(payment.sessionStartsAt)}`}
+        tone="subtle"
         onClick={handleOpen}
       />
       <ConfirmDialog

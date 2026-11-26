@@ -29,7 +29,6 @@ export type Payment = {
   method: PaymentMethod | null;
   dueDate: string;
   paidAt: string | null;
-  receiptNumber: number | null;
 };
 
 export type MonthlyRevenue = {

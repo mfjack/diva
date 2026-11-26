@@ -111,7 +111,7 @@ export function PatientFormDialog({
             label="CPF"
             mask="cpf"
             placeholder="000.000.000-00"
-            description="Usado nos recibos para reembolso e IR."
+            description="Necessário para emitir o recibo no Receita Saúde."
           />
           <DateField
             control={form.control}

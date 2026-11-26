@@ -1,9 +1,9 @@
 "use client";
 
-import { CircleCheck } from "lucide-react";
+import { HandCoins } from "lucide-react";
 import { useState } from "react";
-import { DataTableRowActionButton } from "@/components/data-table/data-table-row-action-button";
 import { formatDate } from "@/lib/format";
+import { PaymentActionButton } from "./payment-action-button";
 import {
   type PaymentTarget,
   RegisterPaymentDialog,
@@ -22,10 +22,10 @@ export function RegisterPaymentButton({ target }: RegisterPaymentButtonProps) {
 
   return (
     <>
-      <DataTableRowActionButton
-        label="Registrar pagamento"
+      <PaymentActionButton
+        icon={HandCoins}
+        label="Receber"
         accessibleLabel={`Registrar pagamento da sessão de ${formatDate(target.sessionStartsAt)}`}
-        icon={CircleCheck}
         onClick={handleOpen}
       />
       <RegisterPaymentDialog

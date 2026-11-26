@@ -57,7 +57,7 @@ export function PracticeSettingsForm({ settings }: PracticeSettingsFormProps) {
   return (
     <SettingsCard
       title="Atendimento"
-      description="Esses dados aparecem para o paciente na hora de agendar e nos recibos."
+      description="Esses dados aparecem para o paciente na hora de agendar."
       isSubmitting={saveSettingsMutation.isPending}
       onSubmit={handleSubmit}
     >
@@ -68,7 +68,7 @@ export function PracticeSettingsForm({ settings }: PracticeSettingsFormProps) {
             name="psychologistName"
             label="Nome"
             placeholder="Seu nome"
-            description="Aparece no menu, nos recibos e nos documentos."
+            description="Aparece no menu e nos documentos."
           />
         </div>
         <TextField

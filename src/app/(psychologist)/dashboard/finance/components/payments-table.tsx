@@ -1,13 +1,12 @@
 "use client";
 
-import { CircleCheck, Download, MessageCircle } from "lucide-react";
+import { HandCoins, MessageCircle } from "lucide-react";
 import { type ReactNode, useMemo } from "react";
-import { toast } from "sonner";
 import { DataTable } from "@/components/data-table/data-table";
 import { createDataTableColumnHelper } from "@/components/data-table/data-table-features";
-import { DataTableRowActionButton } from "@/components/data-table/data-table-row-action-button";
 import { useDataTable } from "@/components/data-table/use-data-table";
 import { StatusBadge } from "@/components/status-badge";
+import { PaymentActionButton } from "@/features/payments/components/payment-action-button";
 import { PaymentStatusBadge } from "@/features/payments/components/payment-status-badge";
 import { UndoPaymentButton } from "@/features/payments/components/undo-payment-button";
 import { PAYMENT_METHOD_LABELS } from "@/features/payments/labels";
@@ -97,42 +96,30 @@ export function PaymentsTable({
 
             if (payment.status === "pending") {
               return (
-                <div className="flex justify-end gap-2">
+                <div className="flex items-center justify-end gap-2">
                   {payment.patientPhone && isOverdue(payment) && (
-                    <DataTableRowActionButton
-                      label="Cobrar no WhatsApp"
-                      accessibleLabel={`Cobrar ${payment.patientName} no WhatsApp`}
+                    <PaymentActionButton
                       icon={MessageCircle}
+                      label="Cobrar"
+                      accessibleLabel={`Cobrar ${payment.patientName} no WhatsApp`}
                       onClick={() => onChargePayment(payment)}
                     />
                   )}
-                  <DataTableRowActionButton
-                    label="Registrar pagamento"
+                  <PaymentActionButton
+                    icon={HandCoins}
+                    label="Receber"
                     accessibleLabel={`Registrar pagamento de ${payment.patientName}`}
-                    icon={CircleCheck}
                     onClick={() => onRegisterPayment(payment)}
                   />
                 </div>
               );
             }
 
-            return (
-              <div className="flex justify-end gap-2">
-                {payment.status === "paid" && (
-                  <UndoPaymentButton payment={payment} />
-                )}
-                {payment.status === "paid" && (
-                  <DataTableRowActionButton
-                    label="Baixar recibo"
-                    accessibleLabel={`Baixar recibo de ${payment.patientName}`}
-                    icon={Download}
-                    onClick={() =>
-                      toast.info("O recibo em PDF entra junto com o backend.")
-                    }
-                  />
-                )}
+            return payment.status === "paid" ? (
+              <div className="flex items-center justify-end">
+                <UndoPaymentButton payment={payment} />
               </div>
-            );
+            ) : null;
           },
         }),
       ]),

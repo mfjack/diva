@@ -35,7 +35,6 @@ const PAYMENT_COLUMNS = `
   method,
   due_date,
   paid_at,
-  receipt_number,
   patient:patients!payments_patient_id_fkey (full_name, phone),
   appointments!payments_appointment_id_fkey!inner (starts_at)
 `;
@@ -61,7 +60,6 @@ function toPayment(row: PaymentRow): Payment {
     method: row.method,
     dueDate: row.due_date,
     paidAt: row.paid_at,
-    receiptNumber: row.receipt_number,
   };
 }
 
