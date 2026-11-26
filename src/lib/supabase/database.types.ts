@@ -743,7 +743,6 @@ export type Database = {
           paid_at: string | null
           patient_id: string
           psychologist_id: string
-          receipt_number: number | null
           status: Database["public"]["Enums"]["payment_status"]
           updated_at: string
         }
@@ -759,7 +758,6 @@ export type Database = {
           paid_at?: string | null
           patient_id: string
           psychologist_id: string
-          receipt_number?: number | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
         }
@@ -775,7 +773,6 @@ export type Database = {
           paid_at?: string | null
           patient_id?: string
           psychologist_id?: string
-          receipt_number?: number | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
         }
