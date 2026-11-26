@@ -1,6 +1,6 @@
 import { addDays, format } from "date-fns";
 
-export type Holiday = {
+type Holiday = {
   name: string;
   isOptional: boolean;
 };

@@ -20,7 +20,7 @@ export function getVisibleDateKeys(
   );
 }
 
-export const SCHEDULE_VIEWS = ["week", "month"] as const;
+const SCHEDULE_VIEWS = ["week", "month"] as const;
 
 export type ScheduleView = (typeof SCHEDULE_VIEWS)[number];
 

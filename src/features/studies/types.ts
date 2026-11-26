@@ -16,7 +16,7 @@ export type StudyNoteAttachmentId = Brand<string, "StudyNoteAttachmentId">;
 
 export type StudyNoteAttachment = Attachment & { id: StudyNoteAttachmentId };
 
-export type StudyNoteSource = {
+type StudyNoteSource = {
   title: string;
   author: string;
   url: string;

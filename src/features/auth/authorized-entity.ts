@@ -10,7 +10,7 @@ const entityIdSchema = z.string().min(1);
 
 type MaybePromise<TValue> = TValue | Promise<TValue>;
 
-export type AuthorizedEntityLookup<TEntity> =
+type AuthorizedEntityLookup<TEntity> =
   | { isFound: true; entity: TEntity; psychologist: CurrentUser }
   | { isFound: false; failure: ActionFailure };
 

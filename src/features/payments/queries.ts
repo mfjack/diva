@@ -19,7 +19,7 @@ import { getTodayDateKey, isOverdue } from "./overdue";
 import { buildMonthlyRevenue, REVENUE_MONTHS } from "./revenue";
 import type { MonthlyRevenue, Payment, PaymentId } from "./types";
 
-export type MonthPaymentSummary = {
+type MonthPaymentSummary = {
   receivedCents: Cents;
   receivedCount: number;
   overdueCents: Cents;

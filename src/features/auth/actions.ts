@@ -16,7 +16,7 @@ import { type AcceptTermsInput, acceptTermsSchema } from "./schemas";
 const ACCEPT_TERMS_FAILED_MESSAGE =
   "Não foi possível registrar o aceite. Tente novamente.";
 
-export type OAuthRedirect = { url: string };
+type OAuthRedirect = { url: string };
 
 function buildAuthCallbackUrl(nextPath: string): string {
   const callbackUrl = new URL(ROUTES.authCallback, env.NEXT_PUBLIC_SITE_URL);

@@ -1,4 +1,4 @@
-export type SearchParamValue = string | string[] | undefined;
+type SearchParamValue = string | string[] | undefined;
 
 export function getSingleSearchParam(
   value: SearchParamValue,

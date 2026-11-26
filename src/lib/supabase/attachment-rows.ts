@@ -3,7 +3,7 @@ import { type Attachment, isAttachmentContentType } from "@/lib/attachments";
 export const ATTACHMENT_COLUMNS =
   "id, file_name, content_type, size_bytes, created_at";
 
-export type AttachmentRow = {
+type AttachmentRow = {
   id: string;
   file_name: string;
   content_type: string;

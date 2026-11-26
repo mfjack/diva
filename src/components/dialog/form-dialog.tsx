@@ -29,7 +29,7 @@ const DIALOG_SIZE_CLASS_NAMES = {
   large: "sm:max-w-2xl",
 } as const;
 
-export type FormDialogSecondaryAction = {
+type FormDialogSecondaryAction = {
   label: string;
   isPending: boolean;
   onClick: () => void;

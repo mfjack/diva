@@ -4,7 +4,7 @@ import { addMonthsToMonthKey, getMonthRange, toMonthKey } from "@/lib/months";
 const DAYS_IN_WEEK = 7;
 const MAX_CALENDAR_OFFSET = 52;
 
-export type MonthWeeks = {
+type MonthWeeks = {
   monthKey: string;
   weeks: string[][];
 };

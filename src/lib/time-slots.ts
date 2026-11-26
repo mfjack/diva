@@ -1,14 +1,14 @@
 import { parseTime } from "./dates";
 
-export type TimeSlotOptions = {
+type TimeSlotOptions = {
   startHour: number;
   endHour: number;
   stepMinutes: number;
 };
 
-export type DayPeriod = "morning" | "afternoon" | "evening";
+type DayPeriod = "morning" | "afternoon" | "evening";
 
-export type TimeSlotGroup = {
+type TimeSlotGroup = {
   period: DayPeriod;
   label: string;
   times: string[];

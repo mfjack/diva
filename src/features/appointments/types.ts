@@ -14,7 +14,7 @@ export type AppointmentModality = Enums<"appointment_modality">;
 
 export type CancellationActor = Enums<"cancellation_actor">;
 
-export type AppointmentCancellation = {
+type AppointmentCancellation = {
   cancelledAt: string;
   cancelledBy: CancellationActor;
   reason: string;

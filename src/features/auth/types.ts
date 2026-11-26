@@ -3,7 +3,7 @@ import type { Enums } from "@/lib/supabase/database.types";
 
 export type UserId = Brand<string, "UserId">;
 
-export type UserRole = Enums<"user_role">;
+type UserRole = Enums<"user_role">;
 
 export type CurrentUser = {
   id: UserId;

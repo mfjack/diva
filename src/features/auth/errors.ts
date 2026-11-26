@@ -17,7 +17,7 @@ export const INVALID_FORM_MESSAGE = "Confira os campos e tente novamente.";
 
 export const UNAUTHORIZED_MESSAGE = "Sua sessão expirou. Entre novamente.";
 
-export function getAuthErrorMessage(error: Pick<AuthError, "code">): string {
+function getAuthErrorMessage(error: Pick<AuthError, "code">): string {
   return (
     (error.code && AUTH_ERROR_MESSAGES[error.code]) ?? GENERIC_ERROR_MESSAGE
   );

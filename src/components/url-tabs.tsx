@@ -4,7 +4,7 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import type { ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export type UrlTab<TValue extends string> = {
+type UrlTab<TValue extends string> = {
   value: TValue;
   label: string;
   content: ReactNode;

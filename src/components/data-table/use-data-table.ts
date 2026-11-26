@@ -9,7 +9,7 @@ import {
   dataTableFeatures,
 } from "./data-table-features";
 
-export const DATA_TABLE_BATCH_SIZE = 20;
+const DATA_TABLE_BATCH_SIZE = 20;
 
 type UseDataTableOptions<TData extends RowData> = {
   data: TData[];

@@ -25,7 +25,7 @@ export const PAYMENT_METHOD_OPTIONS = Object.entries(PAYMENT_METHOD_LABELS).map(
   ([value, label]) => ({ value, label }),
 );
 
-export const PAYMENT_PLAN_LABELS = {
+const PAYMENT_PLAN_LABELS = {
   per_session: "Por sessão",
   monthly_before: "Mensal antes das sessões",
   monthly_after: "Mensal após as sessões",

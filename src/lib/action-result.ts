@@ -1,4 +1,4 @@
-export type ActionSuccess<TData> = { status: "success"; data: TData };
+type ActionSuccess<TData> = { status: "success"; data: TData };
 
 export type ActionFailure = { status: "error"; message: string };
 

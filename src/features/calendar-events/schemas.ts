@@ -52,7 +52,7 @@ export const calendarEventSchema = z
 
 export type CalendarEventInput = z.infer<typeof calendarEventSchema>;
 
-export const EVENT_DELETE_SCOPES = ["single", "following"] as const;
+const EVENT_DELETE_SCOPES = ["single", "following"] as const;
 
 export const deleteCalendarEventSchema = z.object({
   scope: z.enum(EVENT_DELETE_SCOPES),

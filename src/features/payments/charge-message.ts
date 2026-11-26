@@ -4,7 +4,7 @@ import type { Payment } from "./types";
 
 export type ChargeItem = Pick<Payment, "sessionStartsAt" | "amountCents">;
 
-export type ChargeMessageParts = {
+type ChargeMessageParts = {
   patientName: string;
   items: readonly ChargeItem[];
   pixKey: string | null;

@@ -3,7 +3,7 @@ import "server-only";
 import type { UserId } from "@/features/auth/types";
 import { createClient } from "@/lib/supabase/server";
 
-export type AuditAction =
+type AuditAction =
   | "clinical_record.viewed"
   | "clinical_record.created"
   | "clinical_record.updated"
