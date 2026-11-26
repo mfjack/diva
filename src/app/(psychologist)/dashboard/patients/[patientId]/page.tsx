@@ -31,10 +31,11 @@ import { formatCurrency, formatShortDate, formatTime } from "@/lib/format";
 import { formatCpf } from "@/lib/masks";
 import type { Cents } from "@/lib/money";
 import { ROUTES } from "@/lib/routes";
-import { PatientAppointmentsList } from "./components/patient-appointments-list";
 import { PatientChargeButton } from "./components/patient-charge-button";
-import { PatientPaymentsList } from "./components/patient-payments-list";
+import { PatientDetailsPopover } from "./components/patient-details-popover";
 import { PatientRecordsList } from "./components/patient-records-list";
+import { PatientSessionsView } from "./components/patient-sessions-view";
+import { buildSessionHistory } from "./session-history";
 
 export async function generateMetadata({
   params,
@@ -83,83 +84,24 @@ export default async function PatientPage({
   const pastAppointments = appointments.filter(
     ({ startsAt }) => startsAt <= now,
   );
+  const sessionHistory = buildSessionHistory({
+    appointments,
+    payments,
+    records,
+    now,
+  });
 
   return (
-    <>
+    <div className="flex flex-1 flex-col lg:h-svh lg:flex-none lg:overflow-hidden">
       <PageHeader
         title={patient.fullName}
-        description={`Em acompanhamento desde ${formatDateKey(patient.startedAt)}`}
-        actions={
-          <>
-            {patient.phone && overduePayments.length > 0 && (
-              <PatientChargeButton
-                patientName={patient.fullName}
-                patientPhone={patient.phone}
-                items={overduePayments}
-                pixKey={settings.pixKey}
-              />
-            )}
-            <Button
-              nativeButton={false}
-              render={
-                <Link
-                  href={`${ROUTES.psychologist.records}/new?patientId=${patient.id}`}
-                />
-              }
-            >
-              <FilePlus2 aria-hidden />
-              Nova anotação
-            </Button>
-          </>
-        }
-      />
-      <PageContent>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="Próxima sessão"
-            value={
-              patient.nextAppointmentAt
-                ? formatShortDate(patient.nextAppointmentAt)
-                : "Sem horário"
-            }
-            hint={
-              patient.nextAppointmentAt
-                ? `às ${formatTime(patient.nextAppointmentAt)}`
-                : "Nenhuma sessão agendada"
-            }
-            icon={CalendarClock}
-          />
-          <StatCard
-            label="Sessões realizadas"
-            value={String(patient.completedSessionCount)}
-            hint={`${pastAppointments.length} no histórico`}
-            icon={CircleCheck}
-          />
-          <StatCard
-            label="Total pago"
-            value={formatCurrency(getPaidTotalCents(payments))}
-            hint={`Sessão a ${formatCurrency(patient.sessionPriceCents)}`}
-            icon={CircleDollarSign}
-          />
-          <StatCard
-            label="Em aberto"
-            value={formatCurrency(patient.pendingAmountCents)}
-            hint={
-              overduePayments.length > 0
-                ? "Há pagamentos em atraso"
-                : "Sessões ainda não pagas"
-            }
-            icon={Hourglass}
-          />
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-3">
-          <aside className="flex flex-col gap-5 rounded-xl border p-5 lg:self-start">
+        titleAddon={
+          <PatientDetailsPopover>
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-semibold text-base">Dados</h2>
+              <h2 className="font-semibold text-sm">Dados</h2>
               <PatientStatusBadge status={patient.status} />
             </div>
-            <dl className="grid grid-cols-2 gap-4 lg:grid-cols-1">
+            <dl className="flex flex-col gap-3">
               {patient.phone && (
                 <InfoItem label="WhatsApp">
                   <WhatsAppLink phone={patient.phone} />
@@ -213,21 +155,87 @@ export default async function PatientPage({
             {patient.notes && (
               <p className="rounded-lg bg-muted p-3 text-sm">{patient.notes}</p>
             )}
-          </aside>
+          </PatientDetailsPopover>
+        }
+        description={`Em acompanhamento desde ${formatDateKey(patient.startedAt)}`}
+        actions={
+          <>
+            {patient.phone && overduePayments.length > 0 && (
+              <PatientChargeButton
+                patientName={patient.fullName}
+                patientPhone={patient.phone}
+                items={overduePayments}
+                pixKey={settings.pixKey}
+              />
+            )}
+            <Button
+              nativeButton={false}
+              render={
+                <Link
+                  href={`${ROUTES.psychologist.records}/new?patientId=${patient.id}`}
+                />
+              }
+            >
+              <FilePlus2 aria-hidden />
+              Nova anotação
+            </Button>
+          </>
+        }
+      />
+      <PageContent className="lg:min-h-0 lg:pb-6">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Próxima sessão"
+            value={
+              patient.nextAppointmentAt
+                ? formatShortDate(patient.nextAppointmentAt)
+                : "Sem horário"
+            }
+            hint={
+              patient.nextAppointmentAt
+                ? `às ${formatTime(patient.nextAppointmentAt)}`
+                : "Nenhuma sessão agendada"
+            }
+            icon={CalendarClock}
+          />
+          <StatCard
+            label="Sessões realizadas"
+            value={String(patient.completedSessionCount)}
+            hint={`${pastAppointments.length} no histórico`}
+            icon={CircleCheck}
+          />
+          <StatCard
+            label="Total pago"
+            value={formatCurrency(getPaidTotalCents(payments))}
+            hint={`Sessão a ${formatCurrency(patient.sessionPriceCents)}`}
+            icon={CircleDollarSign}
+          />
+          <StatCard
+            label="Em aberto"
+            value={formatCurrency(patient.pendingAmountCents)}
+            hint={
+              overduePayments.length > 0
+                ? "Há pagamentos em atraso"
+                : "Sessões ainda não pagas"
+            }
+            icon={Hourglass}
+          />
+        </div>
 
-          <div className="flex flex-col gap-8 lg:col-span-2">
-            <Section title="Sessões anteriores">
-              <PatientAppointmentsList appointments={pastAppointments} />
+        <div className="flex flex-col gap-8 lg:min-h-0 lg:flex-1">
+          <Section title="Sessões" className="lg:min-h-0 lg:flex-1">
+            <PatientSessionsView
+              entries={sessionHistory.entries}
+              className="lg:min-h-0 lg:flex-1"
+            />
+          </Section>
+          {sessionHistory.unlinkedRecords.length > 0 && (
+            <Section title="Outras anotações">
+              <PatientRecordsList records={sessionHistory.unlinkedRecords} />
             </Section>
-            <Section title="Financeiro">
-              <PatientPaymentsList payments={payments} />
-            </Section>
-            <Section title="Prontuário">
-              <PatientRecordsList records={records} />
-            </Section>
-          </div>
+          )}
         </div>
       </PageContent>
-    </>
+    </div>
   );
 }
