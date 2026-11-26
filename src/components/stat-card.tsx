@@ -47,7 +47,7 @@ export function StatCard({
           )}
         />
       </div>
-      <p className="font-semibold text-xl tabular-nums tracking-tight">
+      <p className="font-semibold text-lg tabular-nums tracking-tight">
         {value}
       </p>
       {hint && (
