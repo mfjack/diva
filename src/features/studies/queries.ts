@@ -125,22 +125,3 @@ export async function hasStudyNotes(): Promise<boolean> {
   assertNoDatabaseError(error);
   return (count ?? 0) > 0;
 }
-
-export async function getStudyNoteAttachmentFile(
-  attachmentId: string,
-): Promise<{ attachment: StudyNoteAttachment; storagePath: string } | null> {
-  const parsedId = entityIdSchema.safeParse(attachmentId);
-  if (!parsedId.success || !(await getCurrentUser())) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("study_note_attachments")
-    .select(`${ATTACHMENT_COLUMNS}, storage_path`)
-    .eq("id", parsedId.data)
-    .maybeSingle();
-  assertNoDatabaseError(error);
-  if (!data) return null;
-  return {
-    attachment: toAttachment<StudyNoteAttachmentId>(data),
-    storagePath: data.storage_path,
-  };
-}

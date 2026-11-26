@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import {
+  deleteAttachment,
+  storeAttachment,
+} from "@/features/attachments/storage";
 import { recordAuditLog } from "@/features/audit/record-audit-log";
 import {
   INVALID_FORM_MESSAGE,
@@ -37,11 +41,6 @@ import {
   clinicalRecordSchema,
   patientSessionsSchema,
 } from "./schemas";
-import {
-  CLINICAL_RECORD_ATTACHMENTS_BUCKET,
-  ENCRYPTED_FILE_CONTENT_TYPE,
-  getClinicalRecordAttachmentPath,
-} from "./storage";
 import type {
   ClinicalRecordAttachmentId,
   ClinicalRecordId,
@@ -50,7 +49,7 @@ import type {
 
 const SESSION_NOTE_KIND = "session_note";
 
-const attachmentIdSchema = z.uuid();
+const recordIdSchema = z.uuid();
 
 function revalidateRecords(): void {
   revalidatePath(ROUTES.psychologist.dashboard, "layout");
@@ -138,36 +137,18 @@ export async function uploadClinicalRecordAttachment(
   const upload = await readAttachmentUpload(formData, attachmentCount);
   if (!upload.isValid) return actionFailure(upload.message);
 
-  const attachmentId = crypto.randomUUID() as ClinicalRecordAttachmentId;
-  const storagePath = getClinicalRecordAttachmentPath(
-    psychologist.id,
-    recordId,
-    attachmentId,
-  );
-  const supabase = await createClient();
-  const { error: uploadError } = await supabase.storage
-    .from(CLINICAL_RECORD_ATTACHMENTS_BUCKET)
-    .upload(storagePath, encryptClinicalFile(upload.content), {
-      contentType: ENCRYPTED_FILE_CONTENT_TYPE,
-      upsert: false,
-    });
-  if (uploadError) {
-    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.uploadFailed);
-  }
-
-  const { error } = await supabase.from("clinical_record_attachments").insert({
-    id: attachmentId,
-    record_id: recordId,
-    psychologist_id: psychologist.id,
-    storage_path: storagePath,
-    file_name: upload.fileName,
-    content_type: upload.contentType,
-    size_bytes: upload.sizeBytes,
+  const attachmentId = await storeAttachment({
+    store: "clinicalRecord",
+    psychologistId: psychologist.id,
+    itemId: recordId,
+    upload,
+    encrypt: encryptClinicalFile,
+    insertRow: (supabase, fields) =>
+      supabase
+        .from("clinical_record_attachments")
+        .insert({ ...fields, record_id: recordId }),
   });
-  if (error) {
-    await supabase.storage
-      .from(CLINICAL_RECORD_ATTACHMENTS_BUCKET)
-      .remove([storagePath]);
+  if (!attachmentId) {
     return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.uploadFailed);
   }
 
@@ -187,32 +168,28 @@ export async function deleteClinicalRecordAttachment(
 ): Promise<ActionResult> {
   const psychologist = await getAuthorizedPsychologist();
   if (!psychologist) return actionFailure(UNAUTHORIZED_MESSAGE);
-  const parsedRecordId = attachmentIdSchema.safeParse(recordId);
-  const parsedAttachmentId = attachmentIdSchema.safeParse(attachmentId);
-  if (!parsedRecordId.success || !parsedAttachmentId.success) {
-    return actionFailure(INVALID_FORM_MESSAGE);
-  }
+  const parsedRecordId = recordIdSchema.safeParse(recordId);
+  if (!parsedRecordId.success) return actionFailure(INVALID_FORM_MESSAGE);
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("clinical_record_attachments")
-    .delete()
-    .eq("id", parsedAttachmentId.data)
-    .eq("record_id", parsedRecordId.data)
-    .select("storage_path");
-  if (error) return actionFailure(CLINICAL_RECORD_ACTION_MESSAGES.saveFailed);
-  if (data.length === 0) {
-    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.notFound);
-  }
+  const result = await deleteAttachment({
+    store: "clinicalRecord",
+    attachmentId,
+    failureMessage: CLINICAL_RECORD_ACTION_MESSAGES.saveFailed,
+    deleteRow: (supabase, parsedAttachmentId) =>
+      supabase
+        .from("clinical_record_attachments")
+        .delete()
+        .eq("id", parsedAttachmentId)
+        .eq("record_id", parsedRecordId.data)
+        .select("storage_path"),
+  });
+  if (result.status === "error") return result;
 
-  await supabase.storage
-    .from(CLINICAL_RECORD_ATTACHMENTS_BUCKET)
-    .remove(data.map(({ storage_path }) => storage_path));
   await recordAuditLog({
     actorUserId: psychologist.id,
     action: "clinical_record_attachment.deleted",
     entityType: "clinical_record_attachment",
-    entityId: parsedAttachmentId.data,
+    entityId: attachmentId,
   });
   revalidateRecords();
   return actionSuccess();

@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import {
+  deleteAttachment,
+  removeAttachmentFiles,
+  storeAttachment,
+} from "@/features/attachments/storage";
 import { findAuthorizedEntity } from "@/features/auth/authorized-entity";
 import {
   INVALID_FORM_MESSAGE,
@@ -31,13 +35,7 @@ import {
   expenseOccurrenceSchema,
   expenseSchema,
 } from "./schemas";
-import {
-  EXPENSE_ATTACHMENTS_BUCKET,
-  getExpenseAttachmentPath,
-} from "./storage";
 import type { Expense, ExpenseAttachmentId, ExpenseId } from "./types";
-
-const attachmentIdSchema = z.uuid();
 
 function findAuthorizedExpense(expenseId: string) {
   return findAuthorizedEntity(
@@ -148,39 +146,19 @@ export async function uploadExpenseAttachment(
   );
   if (!upload.isValid) return actionFailure(upload.message);
 
-  const attachmentId = crypto.randomUUID() as ExpenseAttachmentId;
-  const storagePath = getExpenseAttachmentPath(
-    lookup.psychologist.id,
-    lookup.entity.id,
-    attachmentId,
-  );
-  const supabase = await createClient();
-  const { error: uploadError } = await supabase.storage
-    .from(EXPENSE_ATTACHMENTS_BUCKET)
-    .upload(storagePath, upload.content, {
-      contentType: upload.contentType,
-      upsert: false,
-    });
-  if (uploadError) {
-    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.uploadFailed);
-  }
-
-  const { error } = await supabase.from("expense_attachments").insert({
-    id: attachmentId,
-    expense_id: lookup.entity.id,
-    psychologist_id: lookup.psychologist.id,
-    storage_path: storagePath,
-    file_name: upload.fileName,
-    content_type: upload.contentType,
-    size_bytes: upload.sizeBytes,
+  const attachmentId = await storeAttachment({
+    store: "expense",
+    psychologistId: lookup.psychologist.id,
+    itemId: lookup.entity.id,
+    upload,
+    insertRow: (supabase, fields) =>
+      supabase
+        .from("expense_attachments")
+        .insert({ ...fields, expense_id: lookup.entity.id }),
   });
-  if (error) {
-    await supabase.storage
-      .from(EXPENSE_ATTACHMENTS_BUCKET)
-      .remove([storagePath]);
+  if (!attachmentId) {
     return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.uploadFailed);
   }
-
   revalidateFinance();
   return actionSuccess();
 }
@@ -191,26 +169,20 @@ export async function deleteExpenseAttachment(
 ): Promise<ActionResult> {
   const lookup = await findAuthorizedExpense(expenseId);
   if (!lookup.isFound) return lookup.failure;
-  const parsedAttachmentId = attachmentIdSchema.safeParse(attachmentId);
-  if (!parsedAttachmentId.success) return actionFailure(INVALID_FORM_MESSAGE);
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("expense_attachments")
-    .delete()
-    .eq("id", parsedAttachmentId.data)
-    .eq("expense_id", lookup.entity.id)
-    .select("storage_path");
-  if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
-  if (data.length === 0) {
-    return actionFailure(ATTACHMENT_UPLOAD_MESSAGES.notFound);
-  }
-
-  await supabase.storage
-    .from(EXPENSE_ATTACHMENTS_BUCKET)
-    .remove(data.map(({ storage_path }) => storage_path));
-  revalidateFinance();
-  return actionSuccess();
+  const result = await deleteAttachment({
+    store: "expense",
+    attachmentId,
+    failureMessage: EXPENSE_ACTION_MESSAGES.saveFailed,
+    deleteRow: (supabase, parsedAttachmentId) =>
+      supabase
+        .from("expense_attachments")
+        .delete()
+        .eq("id", parsedAttachmentId)
+        .eq("expense_id", lookup.entity.id)
+        .select("storage_path"),
+  });
+  if (result.status === "success") revalidateFinance();
+  return result;
 }
 
 export async function markExpenseOccurrencePaid(
@@ -304,14 +276,10 @@ export async function deleteExpense(
     .eq("id", lookup.entity.id);
   if (error) return actionFailure(EXPENSE_ACTION_MESSAGES.saveFailed);
 
-  const storagePaths = (attachments ?? []).map(
-    ({ storage_path }) => storage_path,
+  await removeAttachmentFiles(
+    "expense",
+    (attachments ?? []).map(({ storage_path }) => storage_path),
   );
-  if (storagePaths.length > 0) {
-    await supabase.storage
-      .from(EXPENSE_ATTACHMENTS_BUCKET)
-      .remove(storagePaths);
-  }
   revalidateFinance();
   return actionSuccess();
 }

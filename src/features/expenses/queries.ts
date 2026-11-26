@@ -20,7 +20,6 @@ import {
 } from "./occurrences";
 import type {
   Expense,
-  ExpenseAttachment,
   ExpenseAttachmentId,
   ExpenseId,
   ExpensePayment,
@@ -128,24 +127,4 @@ export async function hasExpensePayment(
     .eq("due_on", dueOn);
   assertNoDatabaseError(error);
   return (count ?? 0) > 0;
-}
-
-export async function getExpenseAttachmentFile(attachmentId: string): Promise<{
-  attachment: ExpenseAttachment;
-  storagePath: string;
-} | null> {
-  const parsedId = entityIdSchema.safeParse(attachmentId);
-  if (!parsedId.success || !(await getCurrentUser())) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("expense_attachments")
-    .select(`${ATTACHMENT_COLUMNS}, storage_path`)
-    .eq("id", parsedId.data)
-    .maybeSingle();
-  assertNoDatabaseError(error);
-  if (!data) return null;
-  return {
-    attachment: toAttachment<ExpenseAttachmentId>(data),
-    storagePath: data.storage_path,
-  };
 }

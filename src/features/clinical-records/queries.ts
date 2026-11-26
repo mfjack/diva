@@ -17,7 +17,6 @@ import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import { decryptClinicalContent } from "./content-encryption";
 import type {
   ClinicalRecord,
-  ClinicalRecordAttachment,
   ClinicalRecordAttachmentId,
   ClinicalRecordId,
   ClinicalRecordSummary,
@@ -186,28 +185,6 @@ export async function isPatientSession(
     .eq("patient_id", patientId);
   assertNoDatabaseError(error);
   return (count ?? 0) > 0;
-}
-
-export async function getClinicalRecordAttachmentFile(
-  attachmentId: string,
-): Promise<{
-  attachment: ClinicalRecordAttachment;
-  storagePath: string;
-} | null> {
-  const parsedId = entityIdSchema.safeParse(attachmentId);
-  if (!parsedId.success || !(await getCurrentUser())) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("clinical_record_attachments")
-    .select(`${ATTACHMENT_COLUMNS}, storage_path`)
-    .eq("id", parsedId.data)
-    .maybeSingle();
-  assertNoDatabaseError(error);
-  if (!data) return null;
-  return {
-    attachment: toAttachment<ClinicalRecordAttachmentId>(data),
-    storagePath: data.storage_path,
-  };
 }
 
 export async function countClinicalRecordAttachments(
