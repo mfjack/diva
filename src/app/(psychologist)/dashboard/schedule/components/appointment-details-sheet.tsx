@@ -22,7 +22,10 @@ import {
   buildMeetingLinkMessage,
   resolveMeetingUrl,
 } from "@/features/appointments/meeting-link";
-import { hasStarted } from "@/features/appointments/status-transitions";
+import {
+  hasStarted,
+  isOpenAppointment,
+} from "@/features/appointments/status-transitions";
 import type { Appointment } from "@/features/appointments/types";
 import type { SessionNoteSummary } from "@/features/clinical-records/types";
 import type { Patient } from "@/features/patients/types";
@@ -132,65 +135,66 @@ export function AppointmentDetailsSheet({
                 <DetailItem label="Modalidade">
                   <AppointmentModalityLabel modality={appointment.modality} />
                 </DetailItem>
-                {appointment.modality === "online" && (
-                  <DetailItem label="Sala online">
-                    {meetingUrl ? (
-                      <>
-                        <a
-                          href={meetingUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
-                        >
-                          Abrir
-                          <ExternalLink aria-hidden className="size-3.5" />
-                        </a>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Copiar link da sala"
-                          onClick={handleCopyMeetingUrl}
-                        >
-                          <Copy aria-hidden />
-                        </Button>
-                        {meetingLinkWhatsAppUrl && (
+                {appointment.modality === "online" &&
+                  isOpenAppointment(appointment.status) && (
+                    <DetailItem label="Sala online">
+                      {meetingUrl ? (
+                        <>
+                          <a
+                            href={meetingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+                          >
+                            Abrir
+                            <ExternalLink aria-hidden className="size-3.5" />
+                          </a>
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label="Enviar link da sala pelo WhatsApp"
-                            nativeButton={false}
-                            render={
-                              <a
-                                href={meetingLinkWhatsAppUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              />
-                            }
+                            aria-label="Copiar link da sala"
+                            onClick={handleCopyMeetingUrl}
                           >
-                            <MessageCircle aria-hidden />
+                            <Copy aria-hidden />
                           </Button>
-                        )}
+                          {meetingLinkWhatsAppUrl && (
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label="Enviar link da sala pelo WhatsApp"
+                              nativeButton={false}
+                              render={
+                                <a
+                                  href={meetingLinkWhatsAppUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                />
+                              }
+                            >
+                              <MessageCircle aria-hidden />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Trocar o link desta sessão"
+                            onClick={handleEditMeetingLink}
+                          >
+                            <Pencil aria-hidden />
+                          </Button>
+                        </>
+                      ) : (
                         <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Trocar o link desta sessão"
+                          variant="link"
+                          size="sm"
+                          className="h-auto px-0"
                           onClick={handleEditMeetingLink}
                         >
-                          <Pencil aria-hidden />
+                          Adicionar link
                         </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="h-auto px-0"
-                        onClick={handleEditMeetingLink}
-                      >
-                        Adicionar link
-                      </Button>
-                    )}
-                  </DetailItem>
-                )}
+                      )}
+                    </DetailItem>
+                  )}
                 {patient?.phone && (
                   <DetailItem label="Contato">
                     <WhatsAppLink phone={patient.phone} />

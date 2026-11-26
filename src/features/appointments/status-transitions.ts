@@ -22,6 +22,10 @@ const OPEN_STATUSES: ReadonlySet<AppointmentStatus> = new Set([
   "confirmed",
 ]);
 
+export function isOpenAppointment(status: AppointmentStatus): boolean {
+  return OPEN_STATUSES.has(status);
+}
+
 export function hasStarted(startsAt: string, now = Date.now()): boolean {
   return new Date(startsAt).getTime() <= now;
 }

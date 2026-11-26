@@ -4,6 +4,7 @@ import {
   canUpdateStatus,
   getAllowedStatusUpdates,
   hasStarted,
+  isOpenAppointment,
   shouldAutoComplete,
 } from "./status-transitions";
 
@@ -105,5 +106,15 @@ describe("canChangeSchedule", () => {
     expect(
       canChangeSchedule({ status: "cancelled", startsAt: FUTURE }, NOW),
     ).toBe(false);
+  });
+});
+
+describe("isOpenAppointment", () => {
+  it("is open only while the session is scheduled or confirmed", () => {
+    expect(isOpenAppointment("scheduled")).toBe(true);
+    expect(isOpenAppointment("confirmed")).toBe(true);
+    expect(isOpenAppointment("completed")).toBe(false);
+    expect(isOpenAppointment("no_show")).toBe(false);
+    expect(isOpenAppointment("cancelled")).toBe(false);
   });
 });

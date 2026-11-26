@@ -59,7 +59,11 @@ import {
   type SessionPlanSchemaInput,
   sessionPlanSchema,
 } from "./schemas";
-import { canChangeSchedule, canUpdateStatus } from "./status-transitions";
+import {
+  canChangeSchedule,
+  canUpdateStatus,
+  isOpenAppointment,
+} from "./status-transitions";
 import type { AppointmentId } from "./types";
 
 function findAuthorizedAppointment(appointmentId: string) {
@@ -108,7 +112,7 @@ export async function updateAppointmentStatus(
   return actionSuccess();
 }
 
-export type CancelledSessionsSummary = {
+type CancelledSessionsSummary = {
   cancelledCount: number;
 };
 
@@ -187,6 +191,9 @@ export async function updateMeetingLink(
   if (!parsedInput.success) return actionFailure(INVALID_FORM_MESSAGE);
   if (lookup.entity.modality !== "online") {
     return actionFailure(APPOINTMENT_ACTION_MESSAGES.notOnline);
+  }
+  if (!isOpenAppointment(lookup.entity.status)) {
+    return actionFailure(APPOINTMENT_ACTION_MESSAGES.invalidTransition);
   }
 
   const supabase = await createClient();
